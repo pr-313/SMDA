@@ -15,7 +15,7 @@ instead of mean/std, plus a per-cluster category breakdown table.
 
 Outputs (all in terminal):
     - Cluster averages table (numeric cols) / mode table (string cols)
-    - Std dev table (numeric) / unique-count + top categories (string)
+    - CV % table (numeric) / unique-count + top categories (string)
     - Cluster category profiles (string columns only, if any)
     - Cluster sizes
     - Performance metrics: Inertia, Silhouette Score, Davies-Bouldin Index
@@ -298,7 +298,7 @@ def compute_cluster_stats(
 
     Returns:
         num_means   — mean of each numeric col per cluster
-        num_stds    — std dev of each numeric col per cluster
+        num_cvs     — CV% (std/mean * 100) of each numeric col per cluster
         str_modes   — mode (top category) of each string col per cluster
         str_uniques — unique value count of each string col per cluster
         sizes       — row count per cluster
@@ -310,13 +310,20 @@ def compute_cluster_stats(
 
     sizes = df_enc.groupby("_cluster").size().rename("Count")
 
-    # Numeric stats
+    # Numeric stats — compute CV% = (std / |mean|) * 100
+    # Use absolute mean to handle negative-valued columns gracefully.
+    # Where mean is zero (or very near), CV is undefined → NaN.
     if numeric_cols:
-        num_means = df_enc.groupby("_cluster")[numeric_cols].mean()
-        num_stds  = df_enc.groupby("_cluster")[numeric_cols].std(ddof=1)
+        grp       = df_enc.groupby("_cluster")[numeric_cols]
+        _means    = grp.mean()
+        _stds     = grp.std(ddof=1)
+        num_means = _means
+        # Avoid division by zero: replace 0 means with NaN before dividing
+        safe_means = _means.abs().replace(0, float("nan"))
+        num_cvs   = (_stds / safe_means) * 100
     else:
         num_means = pd.DataFrame()
-        num_stds  = pd.DataFrame()
+        num_cvs   = pd.DataFrame()
 
     # String stats — compute on original (unencoded) values
     if string_cols:
@@ -328,7 +335,7 @@ def compute_cluster_stats(
         str_modes   = pd.DataFrame()
         str_uniques = pd.DataFrame()
 
-    return num_means, num_stds, str_modes, str_uniques, sizes
+    return num_means, num_cvs, str_modes, str_uniques, sizes
 
 
 # ─── Terminal output ──────────────────────────────────────────────────────────
@@ -429,19 +436,25 @@ def print_means_table(
     print()
 
 
-def print_stds_table(
-    num_stds: pd.DataFrame,
+def print_cv_table(
+    num_cvs: pd.DataFrame,
     str_uniques: pd.DataFrame,
     numeric_cols: list[str],
     string_cols: list[str],
     k: int,
 ) -> None:
-    """Print within-cluster std dev (numeric) and unique value count (string)."""
+    """Print within-cluster CV% (numeric) and unique value count (string).
+
+    CV% colour bands:
+        green  < 15%  — tight cluster, low relative spread
+        yellow 15–35% — moderate spread
+        red    > 35%  — high spread, cluster may be loose
+    """
     all_cols = numeric_cols + string_cols
     if not all_cols:
         return
 
-    print(section_header("SPREAD  (numeric: std dev  |  string: unique value count per cluster)"))
+    print(section_header("SPREAD  (numeric: CV%  =  std / |mean| × 100  |  string: unique values)"))
 
     col_w = max(max(len(c) for c in all_cols), 14) + 2
     num_w = 14
@@ -452,20 +465,31 @@ def print_stds_table(
     print("\n  " + "  ".join(header))
     print(f"  {DIM}{'─' * (col_w + 10 + (num_w + 2) * k)}{RESET}")
 
-    # Numeric: std dev
+    # Numeric: CV%
     for col in numeric_cols:
-        if num_stds.empty or col not in num_stds.columns:
+        if num_cvs.empty or col not in num_cvs.columns:
             continue
         row_parts = [f"{BOLD}{col:{col_w}}{RESET}  {DIM}{'numeric':<8}{RESET}"]
         for c in range(k):
-            v = num_stds.loc[c, col] if c in num_stds.index else float("nan")
+            if c not in num_cvs.index:
+                row_parts.append(f"{'n/a':^{num_w}}")
+                continue
+            v = num_cvs.loc[c, col]
             if math.isnan(v):
-                row_parts.append(f"{DIM}{'n/a':^{num_w}}{RESET}")
+                row_parts.append(f"{DIM}{'undef':^{num_w}}{RESET}")
             else:
-                row_parts.append(f"{DIM}{v:>{num_w}.4f}{RESET}")
+                # Colour-code by tightness
+                if v < 15:
+                    color = GREEN
+                elif v < 35:
+                    color = YELLOW
+                else:
+                    color = RED
+                label = f"{v:6.1f}%"
+                row_parts.append(f"{color}{label:^{num_w}}{RESET}")
         print("  " + "  ".join(row_parts))
 
-    # String: unique count + hint about diversity
+    # String: unique count
     for col in string_cols:
         if str_uniques.empty or col not in str_uniques.columns:
             continue
@@ -476,6 +500,7 @@ def print_stds_table(
             row_parts.append(f"{MAGENTA}{label:^{num_w}}{RESET}")
         print("  " + "  ".join(row_parts))
 
+    print(f"\n  {DIM}CV% guide:  {GREEN}< 15% tight{RESET}  {DIM}│  {YELLOW}15–35% moderate{RESET}  {DIM}│  {RED}> 35% loose{RESET}")
     print()
 
 
@@ -660,7 +685,7 @@ def main() -> None:
     km, labels = run_kmeans(X, k, max_iter=args.max_iter, n_init=args.runs, random_state=args.seed)
 
     # ── Stats ──
-    num_means, num_stds, str_modes, str_uniques, sizes = compute_cluster_stats(
+    num_means, num_cvs, str_modes, str_uniques, sizes = compute_cluster_stats(
         df_encoded, df_original, labels, numeric_cols, string_cols, k
     )
 
@@ -686,7 +711,7 @@ def main() -> None:
 
     print_cluster_sizes(sizes, k, len(df_encoded))
     print_means_table(num_means, str_modes, numeric_cols, string_cols, k)
-    print_stds_table(num_stds, str_uniques, numeric_cols, string_cols, k)
+    print_cv_table(num_cvs, str_uniques, numeric_cols, string_cols, k)
     print_string_profiles(df_original, labels, string_cols, k)
     print_performance(km, X, labels, k, args.scale)
 
