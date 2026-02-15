@@ -1168,7 +1168,8 @@ class HtmlReport:
   .bar-fill {{
     height: 100%;
     border-radius: 99px;
-   }
+    transition: width 0.3s ease;
+  }}
 
   .simple-table .bar-wrap {{ width: 200px; }}
 
@@ -1236,8 +1237,7 @@ class HtmlReport:
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }}
-    section {{ break-insid transition: width 0.3s ease;
-  }e: avoid; }}
+    section {{ break-inside: avoid; }}
   }}
 </style>
 </head>
