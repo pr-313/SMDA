@@ -5,10 +5,15 @@ kmeans_cluster.py — Generic K-Means clustering tool for CSV inputs.
 Usage:
     python kmeans_cluster.py data.csv
     python kmeans_cluster.py data.csv --k 4
-    python kmeans_cluster.py data.csv --k 4 --cols col1 col2 col3
+    python kmeans_cluster.py data.csv --k 4 --cluster-cols col1 col2 col3
+    python kmeans_cluster.py data.csv --k 4 --cluster-cols col1 col2 --display-cols col3 col4
     python kmeans_cluster.py data.csv --k 4 --scale --max-iter 500 --runs 20
     python kmeans_cluster.py data.csv --auto-k --k-max 8
     python kmeans_cluster.py data.csv --k 3 --export report.html
+
+--cluster-cols  Columns used to fit K-Means (default: all usable columns).
+--display-cols  Extra columns profiled per cluster but NOT used for clustering.
+                Useful to inspect variables without letting them influence assignments.
 
 String columns are automatically label-encoded for clustering.
 In output, string columns show mode (top category) and unique count
@@ -18,6 +23,7 @@ Outputs (all in terminal):
     - Cluster averages table (numeric cols) / mode table (string cols)
     - CV % table (numeric) / unique-count + top categories (string)
     - Cluster category profiles (string columns only, if any)
+    - Display-only column profiles (if --display-cols provided)
     - Cluster sizes
     - Performance metrics: Inertia, Silhouette Score, Davies-Bouldin Index
 
@@ -241,6 +247,76 @@ def load_and_prepare(
     return df_raw, df_encoded, df_original, numeric_cols, string_cols, encoders
 
 
+def load_display_cols(
+    df_raw: pd.DataFrame,
+    display_col_names: list[str],
+    cluster_col_names: list[str],
+    index: "pd.Index",
+) -> tuple[pd.DataFrame, pd.DataFrame, list[str], list[str]]:
+    """Prepare display-only columns from an already-loaded raw dataframe.
+
+    Display cols are profiled per cluster but never used to fit K-Means.
+    They are aligned to the same row index as the clustering dataframe.
+
+    Args:
+        df_raw            — the full raw dataframe from load_and_prepare
+        display_col_names — column names requested via --display-cols
+        cluster_col_names — columns already used for clustering (excluded from display)
+        index             — row index of the post-NaN-drop clustering df, to align rows
+
+    Returns:
+        df_disp_enc  — display df with strings label-encoded (for stats only)
+        df_disp_orig — display df with original string values (for mode/profile display)
+        disp_num     — numeric display column names
+        disp_str     — string display column names
+    """
+    # Validate
+    unknown = [c for c in display_col_names if c not in df_raw.columns]
+    if unknown:
+        print(f"{RED}✗ --display-cols not found in CSV: {unknown}{RESET}")
+        print(f"  Available: {list(df_raw.columns)}")
+        sys.exit(1)
+
+    overlap = [c for c in display_col_names if c in cluster_col_names]
+    if overlap:
+        print(f"{YELLOW}⚠  Columns in both --cluster-cols and --display-cols (will only show in cluster section): {overlap}{RESET}")
+        display_col_names = [c for c in display_col_names if c not in overlap]
+
+    if not display_col_names:
+        return pd.DataFrame(), pd.DataFrame(), [], []
+
+    # Align to the same rows that survived NaN-dropping in load_and_prepare
+    df = df_raw.loc[index, display_col_names].copy()
+
+    disp_num = list(df.select_dtypes(include=[np.number]).columns)
+    disp_str = list(df.select_dtypes(include=["object", "category", "string"]).columns)
+
+    # Heuristic: warn about high-cardinality display string cols (don't skip — just warn)
+    n_rows = len(df)
+    for col in disp_str:
+        if df[col].nunique() > max(2, n_rows * 0.5):
+            print(f"{YELLOW}⚠  Display column '{col}' has high cardinality ({df[col].nunique()} unique values) — profile may be noisy{RESET}")
+
+    df_orig = df.copy()
+    df_enc  = df.copy()
+
+    # Fill NaNs
+    for col in disp_num:
+        fill = df_enc[col].mean()
+        df_enc[col]  = df_enc[col].fillna(fill)
+        df_orig[col] = df_orig[col].fillna(fill)
+
+    for col in disp_str:
+        mode_val = df_enc[col].mode()
+        fill_val = mode_val.iloc[0] if not mode_val.empty else "unknown"
+        df_enc[col]  = df_enc[col].fillna(fill_val)
+        df_orig[col] = df_orig[col].fillna(fill_val)
+        le = LabelEncoder()
+        df_enc[col] = le.fit_transform(df_enc[col].astype(str))
+
+    return df_enc, df_orig, disp_num, disp_str
+
+
 def run_kmeans(
     X: np.ndarray,
     k: int,
@@ -300,43 +376,41 @@ def compute_cluster_stats(
     string_cols: list[str],
     k: int,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.Series]:
-    """Return per-cluster stats split by column type.
+    """Return per-cluster stats for all columns (cluster + display combined).
+
+    numeric_cols and string_cols should already include both cluster and display
+    columns — the caller merges them before calling this.
 
     Returns:
-        num_means   — mean of each numeric col per cluster
-        num_cvs     — CV% (std/mean * 100) of each numeric col per cluster
-        str_modes   — mode (top category) of each string col per cluster
-        str_uniques — unique value count of each string col per cluster
-        sizes       — row count per cluster
+        num_means, num_cvs, str_modes, str_uniques, sizes
     """
-    df_enc = df_encoded.copy()
+    df_enc  = df_encoded.copy()
     df_enc["_cluster"] = labels
     df_orig = df_original.copy()
     df_orig["_cluster"] = labels
 
     sizes = df_enc.groupby("_cluster").size().rename("Count")
 
-    # Numeric stats — compute CV% = (std / |mean|) * 100
-    # Use absolute mean to handle negative-valued columns gracefully.
-    # Where mean is zero (or very near), CV is undefined → NaN.
-    if numeric_cols:
-        grp       = df_enc.groupby("_cluster")[numeric_cols]
-        _means    = grp.mean()
-        _stds     = grp.std(ddof=1)
-        num_means = _means
-        # Avoid division by zero: replace 0 means with NaN before dividing
+    # Only compute on cols that actually exist in the respective df
+    valid_num = [c for c in numeric_cols if c in df_enc.columns]
+    valid_str = [c for c in string_cols  if c in df_orig.columns]
+
+    if valid_num:
+        grp        = df_enc.groupby("_cluster")[valid_num]
+        _means     = grp.mean()
+        _stds      = grp.std(ddof=1)
+        num_means  = _means
         safe_means = _means.abs().replace(0, float("nan"))
-        num_cvs   = (_stds / safe_means) * 100
+        num_cvs    = (_stds / safe_means) * 100
     else:
         num_means = pd.DataFrame()
         num_cvs   = pd.DataFrame()
 
-    # String stats — compute on original (unencoded) values
-    if string_cols:
-        str_modes   = df_orig.groupby("_cluster")[string_cols].agg(
+    if valid_str:
+        str_modes   = df_orig.groupby("_cluster")[valid_str].agg(
             lambda x: x.mode().iloc[0] if not x.mode().empty else "n/a"
         )
-        str_uniques = df_orig.groupby("_cluster")[string_cols].nunique()
+        str_uniques = df_orig.groupby("_cluster")[valid_str].nunique()
     else:
         str_modes   = pd.DataFrame()
         str_uniques = pd.DataFrame()
@@ -389,56 +463,64 @@ def print_means_table(
     numeric_cols: list[str],
     string_cols: list[str],
     k: int,
+    display_cols: Optional[set[str]] = None,
 ) -> None:
-    """Print cluster means (numeric) and cluster modes (string) in one unified table."""
+    """Print cluster means (numeric) and cluster modes (string) in one unified table.
+
+    display_cols: set of column names that are display-only (not used for clustering).
+    These rows are marked with ◇ instead of ◆ in the Type column.
+    """
     all_cols = numeric_cols + string_cols
     if not all_cols:
         return
+
+    display_cols = display_cols or set()
 
     print(section_header("CLUSTER MEANS / MODE  (numeric: mean  |  string: top category)"))
 
     col_w = max(max(len(c) for c in all_cols), 14) + 2
     num_w = 14
 
-    # Header
-    header = [f"{'Variable':{col_w}}  {'Type':<8}"]
+    header = [f"{'Variable':{col_w}}  {'Type':<12}"]
     for c in range(k):
         header.append(f"{ccluster(c)}{BOLD}{'Cluster '+str(c):^{num_w}}{RESET}")
     print("\n  " + "  ".join(header))
-    print(f"  {DIM}{'─' * (col_w + 10 + (num_w + 2) * k)}{RESET}")
+    print(f"  {DIM}{'─' * (col_w + 14 + (num_w + 2) * k)}{RESET}")
 
-    # Numeric rows
     for col in numeric_cols:
         if num_means.empty or col not in num_means.columns:
             continue
-        row_parts = [f"{BOLD}{col:{col_w}}{RESET}  {DIM}{'numeric':<8}{RESET}"]
-        vals = [num_means.loc[c, col] for c in range(k) if c in num_means.index]
+        marker = f"{DIM}◇ display{RESET}" if col in display_cols else f"{DIM}◆ numeric{RESET}"
+        row_parts = [f"{BOLD}{col:{col_w}}{RESET}  {marker:<20}"]
+        vals  = [num_means.loc[c, col] for c in range(k) if c in num_means.index]
         max_v = max(abs(v) for v in vals) if vals else 1
         for c in range(k):
             if c not in num_means.index:
                 row_parts.append(f"{'n/a':^{num_w}}")
                 continue
-            v = num_means.loc[c, col]
+            v         = num_means.loc[c, col]
             intensity = abs(v) / max_v if max_v != 0 else 0
-            color = ccluster(c) if intensity > 0.85 else ""
+            color     = ccluster(c) if intensity > 0.85 else ""
             row_parts.append(f"{color}{v:>{num_w}.4f}{RESET}")
         print("  " + "  ".join(row_parts))
 
-    # String rows — show mode value, truncated to fit
     for col in string_cols:
         if str_modes.empty or col not in str_modes.columns:
             continue
-        row_parts = [f"{BOLD}{col:{col_w}}{RESET}  {MAGENTA}{'string':<8}{RESET}"]
+        marker = f"{DIM}◇ display{RESET}" if col in display_cols else f"{MAGENTA}◆ string {RESET}"
+        row_parts = [f"{BOLD}{col:{col_w}}{RESET}  {marker:<20}"]
         for c in range(k):
             if c not in str_modes.index:
                 row_parts.append(f"{'n/a':^{num_w}}")
                 continue
-            val = str(str_modes.loc[c, col])
-            # Truncate long values
-            display = val if len(val) <= num_w - 1 else val[: num_w - 2] + "…"
-            row_parts.append(f"{MAGENTA}{display:^{num_w}}{RESET}")
+            val     = str(str_modes.loc[c, col])
+            display = val if len(val) <= num_w - 1 else val[:num_w - 2] + "…"
+            color   = DIM if col in display_cols else MAGENTA
+            row_parts.append(f"{color}{display:^{num_w}}{RESET}")
         print("  " + "  ".join(row_parts))
 
+    if display_cols:
+        print(f"\n  {DIM}◆ used for clustering   ◇ display only (not used for clustering){RESET}")
     print()
 
 
@@ -448,34 +530,34 @@ def print_cv_table(
     numeric_cols: list[str],
     string_cols: list[str],
     k: int,
+    display_cols: Optional[set[str]] = None,
 ) -> None:
     """Print within-cluster CV% (numeric) and unique value count (string).
 
-    CV% colour bands:
-        green  < 15%  — tight cluster, low relative spread
-        yellow 15–35% — moderate spread
-        red    > 35%  — high spread, cluster may be loose
+    display_cols: set of column names that are display-only.
     """
     all_cols = numeric_cols + string_cols
     if not all_cols:
         return
+
+    display_cols = display_cols or set()
 
     print(section_header("SPREAD  (numeric: CV%  =  std / |mean| × 100  |  string: unique values)"))
 
     col_w = max(max(len(c) for c in all_cols), 14) + 2
     num_w = 14
 
-    header = [f"{'Variable':{col_w}}  {'Type':<8}"]
+    header = [f"{'Variable':{col_w}}  {'Type':<12}"]
     for c in range(k):
         header.append(f"{ccluster(c)}{BOLD}{'Cluster '+str(c):^{num_w}}{RESET}")
     print("\n  " + "  ".join(header))
-    print(f"  {DIM}{'─' * (col_w + 10 + (num_w + 2) * k)}{RESET}")
+    print(f"  {DIM}{'─' * (col_w + 14 + (num_w + 2) * k)}{RESET}")
 
-    # Numeric: CV%
     for col in numeric_cols:
         if num_cvs.empty or col not in num_cvs.columns:
             continue
-        row_parts = [f"{BOLD}{col:{col_w}}{RESET}  {DIM}{'numeric':<8}{RESET}"]
+        marker = f"{DIM}◇ display{RESET}" if col in display_cols else f"{DIM}◆ numeric{RESET}"
+        row_parts = [f"{BOLD}{col:{col_w}}{RESET}  {marker:<20}"]
         for c in range(k):
             if c not in num_cvs.index:
                 row_parts.append(f"{'n/a':^{num_w}}")
@@ -484,29 +566,28 @@ def print_cv_table(
             if math.isnan(v):
                 row_parts.append(f"{DIM}{'undef':^{num_w}}{RESET}")
             else:
-                # Colour-code by tightness
-                if v < 15:
-                    color = GREEN
-                elif v < 35:
-                    color = YELLOW
-                else:
-                    color = RED
+                color = GREEN if v < 15 else (YELLOW if v < 35 else RED)
+                # Dim display-only rows slightly to visually de-emphasise
+                if col in display_cols:
+                    color = DIM
                 label = f"{v:6.1f}%"
                 row_parts.append(f"{color}{label:^{num_w}}{RESET}")
         print("  " + "  ".join(row_parts))
 
-    # String: unique count
     for col in string_cols:
         if str_uniques.empty or col not in str_uniques.columns:
             continue
-        row_parts = [f"{BOLD}{col:{col_w}}{RESET}  {MAGENTA}{'string':<8}{RESET}"]
+        marker = f"{DIM}◇ display{RESET}" if col in display_cols else f"{MAGENTA}◆ string {RESET}"
+        row_parts = [f"{BOLD}{col:{col_w}}{RESET}  {marker:<20}"]
         for c in range(k):
             n_uniq = str_uniques.loc[c, col] if c in str_uniques.index else 0
-            label = f"{n_uniq} unique"
-            row_parts.append(f"{MAGENTA}{label:^{num_w}}{RESET}")
+            color  = DIM if col in display_cols else MAGENTA
+            row_parts.append(f"{color}{f'{n_uniq} unique':^{num_w}}{RESET}")
         print("  " + "  ".join(row_parts))
 
     print(f"\n  {DIM}CV% guide:  {GREEN}< 15% tight{RESET}  {DIM}│  {YELLOW}15–35% moderate{RESET}  {DIM}│  {RED}> 35% loose{RESET}")
+    if display_cols:
+        print(f"  {DIM}◆ used for clustering   ◇ display only (not used for clustering){RESET}")
     print()
 
 
@@ -516,10 +597,13 @@ def print_string_profiles(
     string_cols: list[str],
     k: int,
     top_n: int = 3,
+    display_cols: Optional[set[str]] = None,
 ) -> None:
     """Print per-cluster category breakdown for each string column."""
     if not string_cols:
         return
+
+    display_cols = display_cols or set()
 
     print(section_header(f"STRING COLUMN PROFILES  (top {top_n} categories per cluster)"))
 
@@ -527,39 +611,36 @@ def print_string_profiles(
     df["_cluster"] = labels
 
     for col in string_cols:
-        col_w = max(len(col), 16)
-        print(f"\n  {BOLD}{MAGENTA}{col}{RESET}")
+        is_display = col in display_cols
+        marker     = f"  {DIM}◇ display only{RESET}" if is_display else ""
+        print(f"\n  {BOLD}{MAGENTA if not is_display else DIM}{col}{RESET}{marker}")
         print(f"  {DIM}{'─' * 70}{RESET}")
 
-        # Header row
         header = f"  {'Category':<20}  {'':>6}"
         for c in range(k):
             header += f"  {ccluster(c)}{BOLD}{'Cluster '+str(c):^14}{RESET}"
         print(header)
         print(f"  {DIM}{'─' * 70}{RESET}")
 
-        # All unique categories across full column, sorted by overall frequency
         all_cats = df[col].value_counts().index.tolist()
 
-        # Per-cluster counts and percentages
         cluster_counts: dict[int, pd.Series] = {}
         cluster_sizes:  dict[int, int] = {}
         for c in range(k):
             sub = df[df["_cluster"] == c][col]
-            cluster_sizes[c] = len(sub)
+            cluster_sizes[c]  = len(sub)
             cluster_counts[c] = sub.value_counts()
 
-        # Show top_n categories by overall frequency
         for cat in all_cats[:top_n]:
             row = f"  {str(cat):<20}  {'':<6}"
             for c in range(k):
                 count = cluster_counts[c].get(cat, 0)
                 pct   = count / cluster_sizes[c] * 100 if cluster_sizes[c] > 0 else 0
-                bar   = "█" * int(pct / 10)  # 0–10 chars
-                row  += f"  {ccluster(c)}{bar:<10}{RESET} {pct:4.0f}%"
+                bar   = "█" * int(pct / 10)
+                color = DIM if is_display else ccluster(c)
+                row  += f"  {color}{bar:<10}{RESET} {pct:4.0f}%"
             print(row)
 
-        # Remainder row if more categories exist
         remaining = len(all_cats) - top_n
         if remaining > 0:
             print(f"  {DIM}  … {remaining} more categor{'y' if remaining == 1 else 'ies'} not shown{RESET}")
@@ -665,7 +746,8 @@ class HtmlReport:
 
     def __init__(self, filepath: str, k: int, n_rows: int,
                  n_numeric: int, n_string: int, scaled: bool,
-                 numeric_cols: list[str], string_cols: list[str]) -> None:
+                 numeric_cols: list[str], string_cols: list[str],
+                 display_cols: Optional[set[str]] = None) -> None:
         self.filepath    = filepath
         self.k           = k
         self.n_rows      = n_rows
@@ -674,6 +756,7 @@ class HtmlReport:
         self.scaled      = scaled
         self.numeric_cols = numeric_cols
         self.string_cols  = string_cols
+        self.display_cols = display_cols or set()
         self._sections: list[str] = []   # ordered HTML blocks
 
     def _e(self, s: str) -> str:
@@ -713,7 +796,8 @@ class HtmlReport:
         if not all_cols:
             return
 
-        # Header
+        has_display = bool(self.display_cols)
+
         header = "<tr><th>Variable</th><th>Type</th>"
         for c in range(self.k):
             color = _hc(c)
@@ -724,25 +808,35 @@ class HtmlReport:
         for col in self.numeric_cols:
             if num_means.empty or col not in num_means.columns:
                 continue
-            vals = [num_means.loc[c, col] if c in num_means.index else float("nan")
-                    for c in range(self.k)]
+            is_disp   = col in self.display_cols
+            type_html = '<span class="type-badge disp-badge">◇ display</span>' if is_disp \
+                        else '<span class="type-badge num-badge">◆ numeric</span>'
+            vals  = [num_means.loc[c, col] if c in num_means.index else float("nan")
+                     for c in range(self.k)]
             max_v = max((abs(v) for v in vals if not math.isnan(v)), default=1) or 1
             cells = ""
             for c, v in enumerate(vals):
                 intensity = abs(v) / max_v if max_v != 0 else 0
-                bold = "font-weight:600;" if intensity > 0.85 else ""
-                color = f"color:{_hc(c)};" if intensity > 0.85 else ""
+                bold  = "font-weight:600;" if (intensity > 0.85 and not is_disp) else ""
+                color = f"color:{_hc(c)};" if (intensity > 0.85 and not is_disp) else ("color:#94a3b8;" if is_disp else "")
                 cells += f'<td style="{bold}{color}">{v:,.4f}</td>'
-            rows_html += f"<tr><td class='col-name'>{self._e(col)}</td><td><span class='type-badge num-badge'>numeric</span></td>{cells}</tr>"
+            rows_html += f"<tr{'  class=\"disp-row\"' if is_disp else ''}><td class='col-name'>{self._e(col)}</td><td>{type_html}</td>{cells}</tr>"
 
         for col in self.string_cols:
             if str_modes.empty or col not in str_modes.columns:
                 continue
+            is_disp   = col in self.display_cols
+            type_html = '<span class="type-badge disp-badge">◇ display</span>' if is_disp \
+                        else '<span class="type-badge str-badge">◆ string</span>'
             cells = ""
             for c in range(self.k):
-                val = str_modes.loc[c, col] if c in str_modes.index else "n/a"
-                cells += f'<td><span class="cat-val">{self._e(val)}</span></td>'
-            rows_html += f"<tr><td class='col-name'>{self._e(col)}</td><td><span class='type-badge str-badge'>string</span></td>{cells}</tr>"
+                val   = str_modes.loc[c, col] if c in str_modes.index else "n/a"
+                style = "color:#94a3b8" if is_disp else ""
+                cells += f'<td style="{style}"><span class="cat-val">{self._e(val)}</span></td>'
+            rows_html += f"<tr{'  class=\"disp-row\"' if is_disp else ''}><td class='col-name'>{self._e(col)}</td><td>{type_html}</td>{cells}</tr>"
+
+        legend = '<p class="cv-legend">◆ used for clustering &nbsp;·&nbsp; ◇ display only (not used for clustering)</p>' \
+                 if has_display else ""
 
         self._sections.append(f"""
         <section>
@@ -751,6 +845,7 @@ class HtmlReport:
             <thead>{header}</thead>
             <tbody>{rows_html}</tbody>
           </table>
+          {legend}
         </section>""")
 
     # ── CV table ───────────────────────────────────────────────────────────────
@@ -758,6 +853,8 @@ class HtmlReport:
         all_cols = self.numeric_cols + self.string_cols
         if not all_cols:
             return
+
+        has_display = bool(self.display_cols)
 
         header = "<tr><th>Variable</th><th>Type</th>"
         for c in range(self.k):
@@ -769,22 +866,31 @@ class HtmlReport:
         for col in self.numeric_cols:
             if num_cvs.empty or col not in num_cvs.columns:
                 continue
+            is_disp   = col in self.display_cols
+            type_html = '<span class="type-badge disp-badge">◇ display</span>' if is_disp \
+                        else '<span class="type-badge num-badge">◆ numeric</span>'
             cells = ""
             for c in range(self.k):
-                v = num_cvs.loc[c, col] if c in num_cvs.index else float("nan")
+                v   = num_cvs.loc[c, col] if c in num_cvs.index else float("nan")
                 cls = _cv_class(v)
-                label = "undef" if math.isnan(v) else f"{v:.1f}%"
-                cells += f'<td><span class="cv-pill {cls}">{label}</span></td>'
-            rows_html += f"<tr><td class='col-name'>{self._e(col)}</td><td><span class='type-badge num-badge'>numeric</span></td>{cells}</tr>"
+                if is_disp:
+                    cls = "cv-undef"  # render dimly for display cols
+                lbl = "undef" if math.isnan(v) else f"{v:.1f}%"
+                cells += f'<td><span class="cv-pill {cls}">{lbl}</span></td>'
+            rows_html += f"<tr{'  class=\"disp-row\"' if is_disp else ''}><td class='col-name'>{self._e(col)}</td><td>{type_html}</td>{cells}</tr>"
 
         for col in self.string_cols:
             if str_uniques.empty or col not in str_uniques.columns:
                 continue
+            is_disp   = col in self.display_cols
+            type_html = '<span class="type-badge disp-badge">◇ display</span>' if is_disp \
+                        else '<span class="type-badge str-badge">◆ string</span>'
             cells = ""
             for c in range(self.k):
-                n = str_uniques.loc[c, col] if c in str_uniques.index else 0
-                cells += f'<td><span class="cat-val">{n} unique</span></td>'
-            rows_html += f"<tr><td class='col-name'>{self._e(col)}</td><td><span class='type-badge str-badge'>string</span></td>{cells}</tr>"
+                n     = str_uniques.loc[c, col] if c in str_uniques.index else 0
+                style = "color:#94a3b8" if is_disp else ""
+                cells += f'<td style="{style}"><span class="cat-val">{n} unique</span></td>'
+            rows_html += f"<tr{'  class=\"disp-row\"' if is_disp else ''}><td class='col-name'>{self._e(col)}</td><td>{type_html}</td>{cells}</tr>"
 
         legend = """
         <p class="cv-legend">
@@ -793,6 +899,8 @@ class HtmlReport:
           <span class="cv-pill cv-loose">loose &gt;35%</span>
           &nbsp; CV% = std / |mean| × 100
         </p>"""
+        if has_display:
+            legend += '<p class="cv-legend">◆ used for clustering &nbsp;·&nbsp; ◇ display only</p>'
 
         self._sections.append(f"""
         <section>
@@ -816,6 +924,8 @@ class HtmlReport:
 
         profile_html = ""
         for col in self.string_cols:
+            is_disp  = col in self.display_cols
+            marker   = ' <span class="disp-badge-inline">◇ display only</span>' if is_disp else ""
             all_cats = df[col].value_counts().index.tolist()
             cluster_counts: dict = {}
             cluster_sizes:  dict = {}
@@ -824,7 +934,6 @@ class HtmlReport:
                 cluster_sizes[c]  = len(sub)
                 cluster_counts[c] = sub.value_counts()
 
-            # Header row
             th_cells = "<th>Category</th>"
             for c in range(self.k):
                 color = _hc(c)
@@ -836,7 +945,7 @@ class HtmlReport:
                 for c in range(self.k):
                     count = cluster_counts[c].get(cat, 0)
                     pct   = count / cluster_sizes[c] * 100 if cluster_sizes[c] > 0 else 0
-                    color = _hc(c)
+                    color = "#94a3b8" if is_disp else _hc(c)
                     tds  += f"""<td>
                       <div class="bar-wrap">
                         <div class="bar-fill" style="width:{pct:.0f}%;background:{color}"></div>
@@ -849,9 +958,10 @@ class HtmlReport:
             if remaining > 0:
                 body_rows += f'<tr><td colspan="{self.k + 1}" class="more-note">… {remaining} more categor{"y" if remaining == 1 else "ies"} not shown</td></tr>'
 
+            row_class = ' class="disp-profile"' if is_disp else ""
             profile_html += f"""
-            <div class="profile-block">
-              <h3>{self._e(col)}</h3>
+            <div class="profile-block"{row_class}>
+              <h3>{self._e(col)}{marker}</h3>
               <table class="data-table">
                 <thead><tr>{th_cells}</tr></thead>
                 <tbody>{body_rows}</tbody>
@@ -1227,6 +1337,15 @@ class HtmlReport:
   .more-note {{ color: var(--muted); font-style: italic; font-size: 0.8rem; padding: 8px 14px; }}
   .profile-block {{ margin-bottom: 24px; }}
   .profile-block:last-child {{ margin-bottom: 0; }}
+  .disp-badge {{ background: #f1f5f9; color: #64748b; }}
+  .disp-row td {{ color: #94a3b8; }}
+  .disp-row td.col-name {{ color: #64748b; }}
+  .disp-badge-inline {{
+    font-size: 0.7rem; font-weight: 600; color: #94a3b8;
+    background: #f1f5f9; border-radius: 4px;
+    padding: 1px 6px; margin-left: 6px; vertical-align: middle;
+  }}
+  .disp-profile h3 {{ color: #94a3b8; }}
 
   /* ── Print ── */
   @media print {{
@@ -1284,13 +1403,21 @@ def parse_args() -> argparse.Namespace:
 Examples:
   python kmeans_cluster.py iris.csv
   python kmeans_cluster.py iris.csv --k 3
-  python kmeans_cluster.py data.csv --k 5 --cols age income score --scale
+  python kmeans_cluster.py data.csv --k 5 --cluster-cols age income score --scale
+  python kmeans_cluster.py data.csv --k 3 --cluster-cols age income --display-cols score region
   python kmeans_cluster.py data.csv --auto-k --k-max 8
+  python kmeans_cluster.py data.csv --k 3 --export report.html
         """,
     )
     parser.add_argument("filepath", help="Path to the CSV file")
     parser.add_argument("--k", type=int, default=3, help="Number of clusters (default: 3)")
-    parser.add_argument("--cols", nargs="+", help="Specific column names to use (default: all numeric)")
+    parser.add_argument("--cluster-cols", nargs="+", dest="cluster_cols",
+                        help="Columns used to fit K-Means (default: all usable columns)")
+    parser.add_argument("--display-cols", nargs="+", dest="display_cols",
+                        help="Extra columns profiled per cluster but NOT used for clustering")
+    # Backward-compat alias — silently maps to --cluster-cols
+    parser.add_argument("--cols", nargs="+", dest="cols_legacy",
+                        help=argparse.SUPPRESS)
     parser.add_argument("--scale", action="store_true", help="Standardise features before clustering (recommended for mixed-scale data)")
     parser.add_argument("--max-iter", type=int, default=300, help="Max iterations per run (default: 300)")
     parser.add_argument("--runs", type=int, default=10, help="Number of random initialisations (default: 10)")
@@ -1304,15 +1431,51 @@ Examples:
 def main() -> None:
     args = parse_args()
 
-    # ── Load data (handles string encoding internally) ──
+    # ── Backward-compat: --cols maps to --cluster-cols ──
+    cluster_col_input = args.cluster_cols or args.cols_legacy or None
+    display_col_input = args.display_cols or None
+
+    if args.cols_legacy:
+        print(f"{YELLOW}⚠  --cols is deprecated; use --cluster-cols instead{RESET}")
+
+    # ── Load clustering data ──
     df_raw, df_encoded, df_original, numeric_cols, string_cols, encoders = load_and_prepare(
-        args.filepath, args.cols
+        args.filepath, cluster_col_input
     )
 
-    all_feature_cols = numeric_cols + string_cols
+    # ── Load display-only columns and merge into the stats dataframes ──
+    display_cols: set[str] = set()
+
+    if display_col_input:
+        all_cluster_cols = numeric_cols + string_cols
+        df_disp_enc, df_disp_orig, disp_num, disp_str = load_display_cols(
+            df_raw, display_col_input, all_cluster_cols, df_encoded.index
+        )
+
+        display_cols = set(disp_num + disp_str)
+
+        # Merge display cols into the stats dataframes (right-join on index)
+        if not df_disp_enc.empty:
+            df_encoded  = df_encoded.join(df_disp_enc,  how="left")
+            df_original = df_original.join(df_disp_orig, how="left")
+
+        # Unified col lists: cluster cols first, then display cols
+        all_numeric = numeric_cols + disp_num
+        all_string  = string_cols  + disp_str
+
+        if disp_num or disp_str:
+            parts = []
+            if disp_num: parts.append(f"numeric: {', '.join(disp_num)}")
+            if disp_str: parts.append(f"string: {', '.join(disp_str)}")
+            print(f"{CYAN}ℹ  Display-only columns (◇): {'; '.join(parts)}{RESET}")
+    else:
+        all_numeric = numeric_cols
+        all_string  = string_cols
+
+    all_feature_cols = numeric_cols + string_cols  # clustering features only
     X_raw = df_encoded[all_feature_cols].values.astype(float)
 
-    # ── Scale (only makes sense on the encoded matrix) ──
+    # ── Scale ──
     if args.scale:
         scaler = StandardScaler()
         X = scaler.fit_transform(X_raw)
@@ -1334,12 +1497,12 @@ def main() -> None:
     # ── Fit ──
     km, labels = run_kmeans(X, k, max_iter=args.max_iter, n_init=args.runs, random_state=args.seed)
 
-    # ── Stats ──
+    # ── Stats on ALL cols (cluster + display merged) ──
     num_means, num_cvs, str_modes, str_uniques, sizes = compute_cluster_stats(
-        df_encoded, df_original, labels, numeric_cols, string_cols, k
+        df_encoded, df_original, labels, all_numeric, all_string, k
     )
 
-    # ── Performance metrics (computed once, used by both terminal + HTML) ──
+    # ── Performance metrics ──
     inertia = km.inertia_
     if k > 1 and len(set(labels)) > 1:
         sil = silhouette_score(X, labels)
@@ -1347,17 +1510,18 @@ def main() -> None:
     else:
         sil = db = float("nan")
 
-    # ── HTML report (build in parallel, write after terminal output) ──
+    # ── HTML report ──
     report: Optional[HtmlReport] = None
     if args.export:
         report = HtmlReport(
             filepath=args.filepath, k=k,
             n_rows=len(df_encoded),
-            n_numeric=len(numeric_cols),
-            n_string=len(string_cols),
+            n_numeric=len(all_numeric),
+            n_string=len(all_string),
             scaled=args.scale,
-            numeric_cols=numeric_cols,
-            string_cols=string_cols,
+            numeric_cols=all_numeric,
+            string_cols=all_string,
+            display_cols=display_cols,
         )
         report.add_cluster_sizes(sizes, len(df_encoded))
         report.add_means_table(num_means, str_modes)
@@ -1365,30 +1529,37 @@ def main() -> None:
         report.add_string_profiles(df_original, labels)
         report.add_performance(inertia, sil, db, km.n_iter_)
 
-    # ── Print terminal output ──
+    # ── Terminal output ──
     print_banner(
         args.filepath, k,
         n_rows=len(df_encoded),
-        n_numeric=len(numeric_cols),
-        n_string=len(string_cols),
+        n_numeric=len(all_numeric),
+        n_string=len(all_string),
         scaled=args.scale,
     )
 
     feature_summary = []
     if numeric_cols:
-        feature_summary.append(f"{BOLD}Numeric:{RESET} {', '.join(numeric_cols)}")
+        feature_summary.append(f"{BOLD}◆ Cluster numeric:{RESET} {', '.join(numeric_cols)}")
     if string_cols:
-        feature_summary.append(f"{BOLD}{MAGENTA}String:{RESET} {', '.join(string_cols)}")
+        feature_summary.append(f"{BOLD}{MAGENTA}◆ Cluster string:{RESET} {', '.join(string_cols)}")
+    if display_cols:
+        disp_num_list = [c for c in all_numeric if c in display_cols]
+        disp_str_list = [c for c in all_string  if c in display_cols]
+        if disp_num_list:
+            feature_summary.append(f"{DIM}◇ Display numeric:{RESET} {', '.join(disp_num_list)}")
+        if disp_str_list:
+            feature_summary.append(f"{DIM}◇ Display string:{RESET} {', '.join(disp_str_list)}")
     for line in feature_summary:
         print(f"  {line}")
     if args.scale and string_cols:
         print(f"  {DIM}⚠  Scaling applied to label-encoded string columns too.{RESET}")
-    print(f"  {DIM}(Numeric stats in original units; string stats show original category labels){RESET}")
+    print(f"  {DIM}(◆ used for clustering  ◇ display only — not used for clustering){RESET}")
 
     print_cluster_sizes(sizes, k, len(df_encoded))
-    print_means_table(num_means, str_modes, numeric_cols, string_cols, k)
-    print_cv_table(num_cvs, str_uniques, numeric_cols, string_cols, k)
-    print_string_profiles(df_original, labels, string_cols, k)
+    print_means_table(num_means, str_modes, all_numeric, all_string, k, display_cols)
+    print_cv_table(num_cvs, str_uniques, all_numeric, all_string, k, display_cols)
+    print_string_profiles(df_original, labels, all_string, k, display_cols=display_cols)
     print_performance(km, X, labels, k, args.scale, inertia, sil, db)
 
     # ── Write HTML if requested ──
