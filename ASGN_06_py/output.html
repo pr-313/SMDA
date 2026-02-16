@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K-Means Report — customers_data_for_clustering.csv</title>
+<style>
+  :root {
+    --sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    --bg:      #f8fafc;
+    --surface: #ffffff;
+    --border:  #e2e8f0;
+    --text:    #0f172a;
+    --muted:   #64748b;
+    --accent:  #1e40af;
+      --c0: #16a34a;
+  --c1: #ca8a04;
+  --c2: #0891b2;
+  --c3: #9333ea;
+  --c4: #dc2626;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 0 0 64px;
+  }
+
+  /* ── Header ── */
+  .report-header {
+    background: var(--accent);
+    color: white;
+    padding: 36px 48px 32px;
+  }
+
+  .report-header h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+  }
+
+  .report-header .filepath {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    opacity: 0.8;
+    margin-bottom: 18px;
+  }
+
+  .meta-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .meta-pill {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 99px;
+    padding: 3px 12px;
+    font-size: 0.78rem;
+    font-weight: 500;
+  }
+
+  /* ── Layout ── */
+  .content { max-width: 1100px; margin: 0 auto; padding: 0 32px; }
+
+  section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-top: 24px;
+  }
+
+  section h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .subtitle {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--muted);
+  }
+
+  section h3 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin: 20px 0 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  section h3:first-child { margin-top: 0; }
+
+  /* ── Tables ── */
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+
+  th {
+    text-align: left;
+    padding: 9px 14px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f8fafc; }
+
+  td.num { font-family: var(--mono); text-align: right; }
+
+  .col-name {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: var(--text);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .data-table td { font-family: var(--mono); font-size: 0.82rem; }
+
+  /* ── Badges ── */
+  .cluster-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .type-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .num-badge { background: #eff6ff; color: #1d4ed8; }
+  .str-badge { background: #fdf4ff; color: #7e22ce; }
+
+  .cat-val {
+    display: inline-block;
+    background: #f1f5f9;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #334155;
+  }
+
+  /* ── CV pills ── */
+  .cv-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .cv-tight    { background: #dcfce7; color: #166534; }
+  .cv-moderate { background: #fef9c3; color: #854d0e; }
+  .cv-loose    { background: #fee2e2; color: #991b1b; }
+  .cv-undef    { background: #f1f5f9; color: #64748b; }
+
+  .cv-legend {
+    margin-top: 14px;
+    font-size: 0.78rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  /* ── Rating badges ── */
+  .rating-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 99px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+  .rating-good { background: #dcfce7; color: #166534; }
+  .rating-fair { background: #fef9c3; color: #854d0e; }
+  .rating-weak { background: #fee2e2; color: #991b1b; }
+
+  /* ── Bar charts ── */
+  .bar-wrap {
+    background: #f1f5f9;
+    border-radius: 99px;
+    height: 8px;
+    width: 160px;
+    overflow: hidden;
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.3s ease;
+  }
+
+  .simple-table .bar-wrap { width: 200px; }
+
+  .pct-label {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-left: 6px;
+    font-family: var(--mono);
+  }
+
+  /* ── Metric cards ── */
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .metric-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  .metric-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .metric-desc {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+
+  .metric-value { margin-top: 6px; font-family: var(--mono); }
+
+  .metric-bar-wrap {
+    background: #e2e8f0;
+    border-radius: 99px;
+    height: 10px;
+    overflow: hidden;
+    margin: 10px 0 8px;
+  }
+
+  .metric-bar-fill { height: 100%; border-radius: 99px; }
+
+  /* ── Misc ── */
+  .muted { color: var(--muted); font-size: 0.8rem; font-style: italic; margin-top: 6px; }
+  .more-note { color: var(--muted); font-style: italic; font-size: 0.8rem; padding: 8px 14px; }
+  .profile-block { margin-bottom: 24px; }
+  .profile-block:last-child { margin-bottom: 0; }
+
+  /* ── Print ── */
+  @media print {
+    body { background: white; }
+    .report-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .bar-fill, .metric-bar-fill, .cv-pill, .rating-badge, .cluster-badge,
+    .type-badge, .num-badge, .str-badge {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    section { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="report-header">
+  <h1>K-Means Clustering Report</h1>
+  <div class="filepath">customers_data_for_clustering.csv</div>
+  <div class="meta-pills">
+    <span class="meta-pill">k = 5 clusters</span>
+    <span class="meta-pill">5,892 rows</span>
+    <span class="meta-pill">5 numeric, 1 string features</span>
+    <span class="meta-pill">StandardScaler applied</span>
+    <span class="meta-pill">Generated 2026-02-16 14:59</span>
+  </div>
+</div>
+
+<div class="content">
+
+        <section>
+          <h2>Cluster Sizes</h2>
+          <table class="simple-table">
+            <thead><tr><th>Cluster</th><th>Distribution</th><th>Rows</th><th>Share</th></tr></thead>
+            <tbody>
+            <tr>
+              <td><span class="cluster-badge" style="background:#16a34a20;color:#16a34a;border:1px solid #16a34a60">
+                Cluster 0</span></td>
+              <td>
+                <div class="bar-wrap">
+                  <div class="bar-fill" style="width:12.6%;background:#16a34a"></div>
+                </div>
+              </td>
+              <td class="num">740</td>
+              <td class="num">12.6%</td>
+            </tr>
+            <tr>
+              <td><span class="cluster-badge" style="background:#ca8a0420;color:#ca8a04;border:1px solid #ca8a0460">
+                Cluster 1</span></td>
+              <td>
+                <div class="bar-wrap">
+                  <div class="bar-fill" style="width:30.8%;background:#ca8a04"></div>
+                </div>
+              </td>
+              <td class="num">1,812</td>
+              <td class="num">30.8%</td>
+            </tr>
+            <tr>
+              <td><span class="cluster-badge" style="background:#0891b220;color:#0891b2;border:1px solid #0891b260">
+                Cluster 2</span></td>
+              <td>
+                <div class="bar-wrap">
+                  <div class="bar-fill" style="width:24.2%;background:#0891b2"></div>
+                </div>
+              </td>
+              <td class="num">1,426</td>
+              <td class="num">24.2%</td>
+            </tr>
+            <tr>
+              <td><span class="cluster-badge" style="background:#9333ea20;color:#9333ea;border:1px solid #9333ea60">
+                Cluster 3</span></td>
+              <td>
+                <div class="bar-wrap">
+                  <div class="bar-fill" style="width:15.4%;background:#9333ea"></div>
+                </div>
+              </td>
+              <td class="num">905</td>
+              <td class="num">15.4%</td>
+            </tr>
+            <tr>
+              <td><span class="cluster-badge" style="background:#dc262620;color:#dc2626;border:1px solid #dc262660">
+                Cluster 4</span></td>
+              <td>
+                <div class="bar-wrap">
+                  <div class="bar-fill" style="width:17.1%;background:#dc2626"></div>
+                </div>
+              </td>
+              <td class="num">1,009</td>
+              <td class="num">17.1%</td>
+            </tr></tbody>
+          </table>
+        </section>
+
+        <section>
+          <h2>Cluster Means <span class="subtitle">numeric: mean &nbsp;·&nbsp; string: top category</span></h2>
+          <table class="data-table">
+            <thead><tr><th>Variable</th><th>Type</th><th style="color:#16a34a">Cluster 0</th><th style="color:#ca8a04">Cluster 1</th><th style="color:#0891b2">Cluster 2</th><th style="color:#9333ea">Cluster 3</th><th style="color:#dc2626">Cluster 4</th></tr></thead>
+            <tbody><tr><td class='col-name'>income</td><td><span class='type-badge num-badge'>numeric</span></td><td style="font-weight:600;color:#16a34a;">133,675.6446</td><td style="">59,877.8847</td><td style="">50,199.9642</td><td style="">101,579.7724</td><td style="">66,258.0387</td></tr><tr><td class='col-name'>tenure_months</td><td><span class='type-badge num-badge'>numeric</span></td><td style="font-weight:600;color:#16a34a;">77.1284</td><td style="">29.7798</td><td style="">11.3050</td><td style="">60.1315</td><td style="">20.2577</td></tr><tr><td class='col-name'>engagement_score</td><td><span class='type-badge num-badge'>numeric</span></td><td style="font-weight:600;color:#16a34a;">85.2479</td><td style="">50.7011</td><td style="">55.3463</td><td style="">28.4539</td><td style="">61.7904</td></tr><tr><td class='col-name'>lifetime_value</td><td><span class='type-badge num-badge'>numeric</span></td><td style="font-weight:600;color:#16a34a;">44,282.2201</td><td style="">20,302.0433</td><td style="">17,124.5249</td><td style="">33,574.3844</td><td style="">22,291.1284</td></tr><tr><td class='col-name'>true_label</td><td><span class='type-badge num-badge'>numeric</span></td><td style="">2.4662</td><td style="">0.8284</td><td style="">0.6599</td><td style="">2.5470</td><td style="font-weight:600;color:#dc2626;">3.5639</td></tr><tr><td class='col-name'>region</td><td><span class='type-badge str-badge'>string</span></td><td><span class="cat-val">North</span></td><td><span class="cat-val">West</span></td><td><span class="cat-val">East</span></td><td><span class="cat-val">North</span></td><td><span class="cat-val">East</span></td></tr></tbody>
+          </table>
+        </section>
+
+        <section>
+          <h2>Within-Cluster Spread <span class="subtitle">CV% for numeric &nbsp;·&nbsp; unique values for string</span></h2>
+          <table class="data-table">
+            <thead><tr><th>Variable</th><th>Type</th><th style="color:#16a34a">Cluster 0</th><th style="color:#ca8a04">Cluster 1</th><th style="color:#0891b2">Cluster 2</th><th style="color:#9333ea">Cluster 3</th><th style="color:#dc2626">Cluster 4</th></tr></thead>
+            <tbody><tr><td class='col-name'>income</td><td><span class='type-badge num-badge'>numeric</span></td><td><span class="cv-pill cv-tight">10.5%</span></td><td><span class="cv-pill cv-moderate">16.4%</span></td><td><span class="cv-pill cv-moderate">23.2%</span></td><td><span class="cv-pill cv-moderate">16.5%</span></td><td><span class="cv-pill cv-tight">9.9%</span></td></tr><tr><td class='col-name'>tenure_months</td><td><span class='type-badge num-badge'>numeric</span></td><td><span class="cv-pill cv-tight">15.0%</span></td><td><span class="cv-pill cv-loose">37.0%</span></td><td><span class="cv-pill cv-loose">71.5%</span></td><td><span class="cv-pill cv-moderate">25.4%</span></td><td><span class="cv-pill cv-moderate">31.2%</span></td></tr><tr><td class='col-name'>engagement_score</td><td><span class='type-badge num-badge'>numeric</span></td><td><span class="cv-pill cv-moderate">17.7%</span></td><td><span class="cv-pill cv-moderate">20.8%</span></td><td><span class="cv-pill cv-moderate">15.6%</span></td><td><span class="cv-pill cv-loose">60.5%</span></td><td><span class="cv-pill cv-moderate">15.8%</span></td></tr><tr><td class='col-name'>lifetime_value</td><td><span class='type-badge num-badge'>numeric</span></td><td><span class="cv-pill cv-tight">10.6%</span></td><td><span class="cv-pill cv-moderate">15.2%</span></td><td><span class="cv-pill cv-moderate">22.0%</span></td><td><span class="cv-pill cv-moderate">16.0%</span></td><td><span class="cv-pill cv-tight">9.6%</span></td></tr><tr><td class='col-name'>true_label</td><td><span class='type-badge num-badge'>numeric</span></td><td><span class="cv-pill cv-moderate">20.2%</span></td><td><span class="cv-pill cv-loose">111.5%</span></td><td><span class="cv-pill cv-loose">96.2%</span></td><td><span class="cv-pill cv-moderate">19.6%</span></td><td><span class="cv-pill cv-moderate">19.6%</span></td></tr><tr><td class='col-name'>region</td><td><span class='type-badge str-badge'>string</span></td><td><span class="cat-val">1 unique</span></td><td><span class="cat-val">3 unique</span></td><td><span class="cat-val">2 unique</span></td><td><span class="cat-val">3 unique</span></td><td><span class="cat-val">4 unique</span></td></tr></tbody>
+          </table>
+          
+        <p class="cv-legend">
+          <span class="cv-pill cv-tight">tight &lt;15%</span>
+          <span class="cv-pill cv-moderate">moderate 15–35%</span>
+          <span class="cv-pill cv-loose">loose &gt;35%</span>
+          &nbsp; CV% = std / |mean| × 100
+        </p>
+        </section>
+
+        <section>
+          <h2>String Column Profiles <span class="subtitle">top 3 categories per cluster</span></h2>
+          
+            <div class="profile-block">
+              <h3>region</h3>
+              <table class="data-table">
+                <thead><tr><th>Category</th><th style="color:#16a34a">Cluster 0</th><th style="color:#ca8a04">Cluster 1</th><th style="color:#0891b2">Cluster 2</th><th style="color:#9333ea">Cluster 3</th><th style="color:#dc2626">Cluster 4</th></tr></thead>
+                <tbody><tr><td class='col-name'>East</td><td>
+                      <div class="bar-wrap">
+                        <div class="bar-fill" style="width:0%;background:#16a34a"></div>
+                      </div>
+                      <span class="pct-label">0%</span>
+                    </td><td>
+                      <div class="bar-wrap">
+                        <div class="bar-fill" style="width:0%;background:#ca8a04"></div>
+                      </div>
+                      <span class="pct-label">0%</span>
+                    </td><td>
+                      <div class="bar-wrap">
+                        <div class="bar-fill" style="width:100%;background:#0891b2"></div>
+                      </div>
+                      <span class="pct-label">100%</span>
+                    </td><td>
+                      <div class="bar-wrap">
+                        <div class="bar-fill" style="width:5%;background:#9333ea"></div>
+                      </div>
+                      <span class="pct-label">5%</span>
+                    </td><td>
+                      <div class="bar-wrap">
+                        <div class="bar-fill" style="width:80%;background:#dc2626"></div>
+                      </div>
+                      <span class="pct-label">80%</span>
+                    </td></tr><tr><td class='col-name'>North</td><td>
+                      <div class="bar-wrap">
+                        <div class="bar-fill" style="width:100%;background:#16a34a"></div>
+                      </div>
+                      <span class="pct-label">100%</span>
+                    </td><td>
+                      <div class="bar-wrap">
+                        <div class="bar-fill" style="width:0%;background:#ca8a04"></div>
+                      </div>
+                      <span class="pct-label">0%</span>
+                    </td><td>
+                      <div class="bar-wrap">
+                        <div class="bar-fill" style="width:0%;background:#0891b2"></div>
+                      </div>
+                      <span class="pct-label">0%</span>
+                    </td><td>
+                      <div class="bar-wrap">
+                        <div class="bar-fill" style="width:88%;background:#9333ea"></div>
+                      </div>
+                      <span class="pct-label">88%</span>
+                    </td><td>
+                      <div class="bar-wrap">
+                        <div class="bar-fill" style="width:9%;background:#dc2626"></div>
+                      </div>
+                      <span class="pct-label">9%</span>
+                    </td></tr><tr><td class='col-name'>West</td><td>
+                      <div class="bar-wrap">
+                        <div class="bar-fill" style="width:0%;background:#16a34a"></div>
+                      </div>
+                      <span class="pct-label">0%</span>
+                    </td><td>
+                      <div class="bar-wrap">
+                        <div class="bar-fill" style="width:77%;background:#ca8a04"></div>
+                      </div>
+                      <span class="pct-label">77%</span>
+                    </td><td>
+                      <div class="bar-wrap">
+                        <div class="bar-fill" style="width:0%;background:#0891b2"></div>
+                      </div>
+                      <span class="pct-label">0%</span>
+                    </td><td>
+                      <div class="bar-wrap">
+                        <div class="bar-fill" style="width:7%;background:#9333ea"></div>
+                      </div>
+                      <span class="pct-label">7%</span>
+                    </td><td>
+                      <div class="bar-wrap">
+                        <div class="bar-fill" style="width:1%;background:#dc2626"></div>
+                      </div>
+                      <span class="pct-label">1%</span>
+                    </td></tr><tr><td colspan="6" class="more-note">… 1 more category not shown</td></tr></tbody>
+              </table>
+            </div>
+        </section>
+
+        <section>
+          <h2>Clustering Performance</h2>
+          <div class="metric-grid">
+
+            <div class="metric-card">
+              <div class="metric-label">Inertia (WCSS)</div>
+              <div class="metric-desc">Sum of squared distances to cluster centres. Lower is better.</div>
+              <div class="metric-value" style="font-size:1.6rem;font-weight:700;color:#ca8a04">7,544.9771</div>
+              <p class="muted">⚠ Inertia is on the scaled space.</p>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-label">Silhouette Score</div>
+              <div class="metric-desc">Range [−1, 1]. Similarity to own cluster vs others. Higher is better.</div>
+              
+              <div class="metric-bar-wrap">
+                <div class="metric-bar-fill" style="width:73%;background:#ca8a04"></div>
+              </div>
+              <div class="metric-value">+0.4668 &nbsp;<span class="rating-badge rating-fair">Fair</span></div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-label">Davies-Bouldin Index</div>
+              <div class="metric-desc">Avg scatter-to-separation ratio. Lower is better. 0 = perfect.</div>
+              <div class="metric-value" style="color:#ca8a04;font-size:1.5rem;font-weight:700">0.7667</div><div><span class="rating-badge rating-good">Good</span></div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-label">Convergence</div>
+              <div class="metric-desc">Iterations until centroids stabilised.</div>
+              <div class="metric-value" style="font-size:1.6rem;font-weight:700">5</div>
+            </div>
+
+          </div>
+        </section>
+</div>
+
+</body>
+</html>
