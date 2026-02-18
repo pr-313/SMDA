@@ -18,7 +18,6 @@
   --c1: #ca8a04;
   --c2: #0891b2;
   --c3: #9333ea;
-  --c4: #dc2626;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -280,6 +279,46 @@
   .more-note { color: var(--muted); font-style: italic; font-size: 0.8rem; padding: 8px 14px; }
   .profile-block { margin-bottom: 24px; }
   .profile-block:last-child { margin-bottom: 0; }
+  .disp-badge { background: #f1f5f9; color: #64748b; }
+  .disp-row td { color: #94a3b8; }
+  .disp-row td.col-name { color: #64748b; }
+  .disp-badge-inline {
+    font-size: 0.7rem; font-weight: 600; color: #94a3b8;
+    background: #f1f5f9; border-radius: 4px;
+    padding: 1px 6px; margin-left: 6px; vertical-align: middle;
+  }
+  .disp-profile h3 { color: #94a3b8; }
+
+  /* ── Plot grid ── */
+  .plot-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+  .plot-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px 12px;
+    min-width: 0;
+  }
+  .plot-wide {
+    grid-column: 1 / -1;
+  }
+  .plot-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .plot-card canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+  }
 
   /* ── Print ── */
   @media print {
@@ -300,11 +339,11 @@
   <h1>K-Means Clustering Report</h1>
   <div class="filepath">customers_data_for_clustering.csv</div>
   <div class="meta-pills">
-    <span class="meta-pill">k = 5 clusters</span>
+    <span class="meta-pill">k = 4 clusters</span>
     <span class="meta-pill">5,892 rows</span>
-    <span class="meta-pill">5 numeric, 1 string features</span>
+    <span class="meta-pill">7 numeric, 1 string features</span>
     <span class="meta-pill">StandardScaler applied</span>
-    <span class="meta-pill">Generated 2026-02-16 14:59</span>
+    <span class="meta-pill">Generated 2026-02-16 20:29</span>
   </div>
 </div>
 
@@ -320,55 +359,44 @@
                 Cluster 0</span></td>
               <td>
                 <div class="bar-wrap">
-                  <div class="bar-fill" style="width:12.6%;background:#16a34a"></div>
+                  <div class="bar-fill" style="width:12.5%;background:#16a34a"></div>
                 </div>
               </td>
-              <td class="num">740</td>
-              <td class="num">12.6%</td>
+              <td class="num">738</td>
+              <td class="num">12.5%</td>
             </tr>
             <tr>
               <td><span class="cluster-badge" style="background:#ca8a0420;color:#ca8a04;border:1px solid #ca8a0460">
                 Cluster 1</span></td>
               <td>
                 <div class="bar-wrap">
-                  <div class="bar-fill" style="width:30.8%;background:#ca8a04"></div>
+                  <div class="bar-fill" style="width:39.1%;background:#ca8a04"></div>
                 </div>
               </td>
-              <td class="num">1,812</td>
-              <td class="num">30.8%</td>
+              <td class="num">2,302</td>
+              <td class="num">39.1%</td>
             </tr>
             <tr>
               <td><span class="cluster-badge" style="background:#0891b220;color:#0891b2;border:1px solid #0891b260">
                 Cluster 2</span></td>
               <td>
                 <div class="bar-wrap">
-                  <div class="bar-fill" style="width:24.2%;background:#0891b2"></div>
+                  <div class="bar-fill" style="width:15.0%;background:#0891b2"></div>
                 </div>
               </td>
-              <td class="num">1,426</td>
-              <td class="num">24.2%</td>
+              <td class="num">881</td>
+              <td class="num">15.0%</td>
             </tr>
             <tr>
               <td><span class="cluster-badge" style="background:#9333ea20;color:#9333ea;border:1px solid #9333ea60">
                 Cluster 3</span></td>
               <td>
                 <div class="bar-wrap">
-                  <div class="bar-fill" style="width:15.4%;background:#9333ea"></div>
+                  <div class="bar-fill" style="width:33.5%;background:#9333ea"></div>
                 </div>
               </td>
-              <td class="num">905</td>
-              <td class="num">15.4%</td>
-            </tr>
-            <tr>
-              <td><span class="cluster-badge" style="background:#dc262620;color:#dc2626;border:1px solid #dc262660">
-                Cluster 4</span></td>
-              <td>
-                <div class="bar-wrap">
-                  <div class="bar-fill" style="width:17.1%;background:#dc2626"></div>
-                </div>
-              </td>
-              <td class="num">1,009</td>
-              <td class="num">17.1%</td>
+              <td class="num">1,971</td>
+              <td class="num">33.5%</td>
             </tr></tbody>
           </table>
         </section>
@@ -376,16 +404,17 @@
         <section>
           <h2>Cluster Means <span class="subtitle">numeric: mean &nbsp;·&nbsp; string: top category</span></h2>
           <table class="data-table">
-            <thead><tr><th>Variable</th><th>Type</th><th style="color:#16a34a">Cluster 0</th><th style="color:#ca8a04">Cluster 1</th><th style="color:#0891b2">Cluster 2</th><th style="color:#9333ea">Cluster 3</th><th style="color:#dc2626">Cluster 4</th></tr></thead>
-            <tbody><tr><td class='col-name'>income</td><td><span class='type-badge num-badge'>numeric</span></td><td style="font-weight:600;color:#16a34a;">133,675.6446</td><td style="">59,877.8847</td><td style="">50,199.9642</td><td style="">101,579.7724</td><td style="">66,258.0387</td></tr><tr><td class='col-name'>tenure_months</td><td><span class='type-badge num-badge'>numeric</span></td><td style="font-weight:600;color:#16a34a;">77.1284</td><td style="">29.7798</td><td style="">11.3050</td><td style="">60.1315</td><td style="">20.2577</td></tr><tr><td class='col-name'>engagement_score</td><td><span class='type-badge num-badge'>numeric</span></td><td style="font-weight:600;color:#16a34a;">85.2479</td><td style="">50.7011</td><td style="">55.3463</td><td style="">28.4539</td><td style="">61.7904</td></tr><tr><td class='col-name'>lifetime_value</td><td><span class='type-badge num-badge'>numeric</span></td><td style="font-weight:600;color:#16a34a;">44,282.2201</td><td style="">20,302.0433</td><td style="">17,124.5249</td><td style="">33,574.3844</td><td style="">22,291.1284</td></tr><tr><td class='col-name'>true_label</td><td><span class='type-badge num-badge'>numeric</span></td><td style="">2.4662</td><td style="">0.8284</td><td style="">0.6599</td><td style="">2.5470</td><td style="font-weight:600;color:#dc2626;">3.5639</td></tr><tr><td class='col-name'>region</td><td><span class='type-badge str-badge'>string</span></td><td><span class="cat-val">North</span></td><td><span class="cat-val">West</span></td><td><span class="cat-val">East</span></td><td><span class="cat-val">North</span></td><td><span class="cat-val">East</span></td></tr></tbody>
+            <thead><tr><th>Variable</th><th>Type</th><th style="color:#16a34a">Cluster 0</th><th style="color:#ca8a04">Cluster 1</th><th style="color:#0891b2">Cluster 2</th><th style="color:#9333ea">Cluster 3</th></tr></thead>
+            <tbody><tr><td class='col-name'>engagement_score</td><td><span class="type-badge num-badge">◆ numeric</span></td><td style="font-weight:600;color:#16a34a;">85.7160</td><td style="">57.8732</td><td style="">28.5245</td><td style="">50.9194</td></tr><tr><td class='col-name'>lifetime_value</td><td><span class="type-badge num-badge">◆ numeric</span></td><td style="font-weight:600;color:#16a34a;">43,998.8685</td><td style="">19,185.3116</td><td style="">34,068.3751</td><td style="">20,396.9019</td></tr><tr  class="disp-row"><td class='col-name'>age</td><td><span class="type-badge disp-badge">◇ display</span></td><td style="color:#94a3b8;">48.9661</td><td style="color:#94a3b8;">28.9878</td><td style="color:#94a3b8;">44.1873</td><td style="color:#94a3b8;">36.2268</td></tr><tr  class="disp-row"><td class='col-name'>income</td><td><span class="type-badge disp-badge">◇ display</span></td><td style="color:#94a3b8;">132,832.5759</td><td style="color:#94a3b8;">56,596.3275</td><td style="color:#94a3b8;">103,105.7446</td><td style="color:#94a3b8;">60,191.0502</td></tr><tr  class="disp-row"><td class='col-name'>tenure_months</td><td><span class="type-badge disp-badge">◇ display</span></td><td style="color:#94a3b8;">76.2778</td><td style="color:#94a3b8;">14.8888</td><td style="color:#94a3b8;">59.6277</td><td style="color:#94a3b8;">29.8919</td></tr><tr  class="disp-row"><td class='col-name'>product_uses</td><td><span class="type-badge disp-badge">◇ display</span></td><td style="color:#94a3b8;">8.2412</td><td style="color:#94a3b8;">3.4188</td><td style="color:#94a3b8;">6.9614</td><td style="color:#94a3b8;">4.3612</td></tr><tr  class="disp-row"><td class='col-name'>support_tickets</td><td><span class="type-badge disp-badge">◇ display</span></td><td style="color:#94a3b8;">4.5054</td><td style="color:#94a3b8;">1.9844</td><td style="color:#94a3b8;">4.0295</td><td style="color:#94a3b8;">2.1476</td></tr><tr><td class='col-name'>region</td><td><span class="type-badge str-badge">◆ string</span></td><td style=""><span class="cat-val">North</span></td><td style=""><span class="cat-val">East</span></td><td style=""><span class="cat-val">North</span></td><td style=""><span class="cat-val">West</span></td></tr></tbody>
           </table>
+          <p class="cv-legend">◆ used for clustering &nbsp;·&nbsp; ◇ display only (not used for clustering)</p>
         </section>
 
         <section>
           <h2>Within-Cluster Spread <span class="subtitle">CV% for numeric &nbsp;·&nbsp; unique values for string</span></h2>
           <table class="data-table">
-            <thead><tr><th>Variable</th><th>Type</th><th style="color:#16a34a">Cluster 0</th><th style="color:#ca8a04">Cluster 1</th><th style="color:#0891b2">Cluster 2</th><th style="color:#9333ea">Cluster 3</th><th style="color:#dc2626">Cluster 4</th></tr></thead>
-            <tbody><tr><td class='col-name'>income</td><td><span class='type-badge num-badge'>numeric</span></td><td><span class="cv-pill cv-tight">10.5%</span></td><td><span class="cv-pill cv-moderate">16.4%</span></td><td><span class="cv-pill cv-moderate">23.2%</span></td><td><span class="cv-pill cv-moderate">16.5%</span></td><td><span class="cv-pill cv-tight">9.9%</span></td></tr><tr><td class='col-name'>tenure_months</td><td><span class='type-badge num-badge'>numeric</span></td><td><span class="cv-pill cv-tight">15.0%</span></td><td><span class="cv-pill cv-loose">37.0%</span></td><td><span class="cv-pill cv-loose">71.5%</span></td><td><span class="cv-pill cv-moderate">25.4%</span></td><td><span class="cv-pill cv-moderate">31.2%</span></td></tr><tr><td class='col-name'>engagement_score</td><td><span class='type-badge num-badge'>numeric</span></td><td><span class="cv-pill cv-moderate">17.7%</span></td><td><span class="cv-pill cv-moderate">20.8%</span></td><td><span class="cv-pill cv-moderate">15.6%</span></td><td><span class="cv-pill cv-loose">60.5%</span></td><td><span class="cv-pill cv-moderate">15.8%</span></td></tr><tr><td class='col-name'>lifetime_value</td><td><span class='type-badge num-badge'>numeric</span></td><td><span class="cv-pill cv-tight">10.6%</span></td><td><span class="cv-pill cv-moderate">15.2%</span></td><td><span class="cv-pill cv-moderate">22.0%</span></td><td><span class="cv-pill cv-moderate">16.0%</span></td><td><span class="cv-pill cv-tight">9.6%</span></td></tr><tr><td class='col-name'>true_label</td><td><span class='type-badge num-badge'>numeric</span></td><td><span class="cv-pill cv-moderate">20.2%</span></td><td><span class="cv-pill cv-loose">111.5%</span></td><td><span class="cv-pill cv-loose">96.2%</span></td><td><span class="cv-pill cv-moderate">19.6%</span></td><td><span class="cv-pill cv-moderate">19.6%</span></td></tr><tr><td class='col-name'>region</td><td><span class='type-badge str-badge'>string</span></td><td><span class="cat-val">1 unique</span></td><td><span class="cat-val">3 unique</span></td><td><span class="cat-val">2 unique</span></td><td><span class="cat-val">3 unique</span></td><td><span class="cat-val">4 unique</span></td></tr></tbody>
+            <thead><tr><th>Variable</th><th>Type</th><th style="color:#16a34a">Cluster 0</th><th style="color:#ca8a04">Cluster 1</th><th style="color:#0891b2">Cluster 2</th><th style="color:#9333ea">Cluster 3</th></tr></thead>
+            <tbody><tr><td class='col-name'>engagement_score</td><td><span class="type-badge num-badge">◆ numeric</span></td><td><span class="cv-pill cv-moderate">16.7%</span></td><td><span class="cv-pill cv-moderate">15.8%</span></td><td><span class="cv-pill cv-loose">59.6%</span></td><td><span class="cv-pill cv-moderate">23.0%</span></td></tr><tr><td class='col-name'>lifetime_value</td><td><span class="type-badge num-badge">◆ numeric</span></td><td><span class="cv-pill cv-tight">11.3%</span></td><td><span class="cv-pill cv-moderate">21.6%</span></td><td><span class="cv-pill cv-moderate">16.2%</span></td><td><span class="cv-pill cv-moderate">15.2%</span></td></tr><tr  class="disp-row"><td class='col-name'>age</td><td><span class="type-badge disp-badge">◇ display</span></td><td><span class="cv-pill cv-undef">11.3%</span></td><td><span class="cv-pill cv-undef">17.1%</span></td><td><span class="cv-pill cv-undef">20.5%</span></td><td><span class="cv-pill cv-undef">19.7%</span></td></tr><tr  class="disp-row"><td class='col-name'>income</td><td><span class="type-badge disp-badge">◇ display</span></td><td><span class="cv-pill cv-undef">11.2%</span></td><td><span class="cv-pill cv-undef">22.7%</span></td><td><span class="cv-pill cv-undef">16.7%</span></td><td><span class="cv-pill cv-undef">16.4%</span></td></tr><tr  class="disp-row"><td class='col-name'>tenure_months</td><td><span class="type-badge disp-badge">◇ display</span></td><td><span class="cv-pill cv-undef">16.0%</span></td><td><span class="cv-pill cv-undef">59.1%</span></td><td><span class="cv-pill cv-undef">28.2%</span></td><td><span class="cv-pill cv-undef">41.7%</span></td></tr><tr  class="disp-row"><td class='col-name'>product_uses</td><td><span class="type-badge disp-badge">◇ display</span></td><td><span class="cv-pill cv-undef">19.5%</span></td><td><span class="cv-pill cv-undef">43.6%</span></td><td><span class="cv-pill cv-undef">30.9%</span></td><td><span class="cv-pill cv-undef">39.3%</span></td></tr><tr  class="disp-row"><td class='col-name'>support_tickets</td><td><span class="type-badge disp-badge">◇ display</span></td><td><span class="cv-pill cv-undef">19.3%</span></td><td><span class="cv-pill cv-undef">40.7%</span></td><td><span class="cv-pill cv-undef">22.2%</span></td><td><span class="cv-pill cv-undef">38.5%</span></td></tr><tr><td class='col-name'>region</td><td><span class="type-badge str-badge">◆ string</span></td><td style=""><span class="cat-val">1 unique</span></td><td style=""><span class="cat-val">2 unique</span></td><td style=""><span class="cat-val">3 unique</span></td><td style=""><span class="cat-val">2 unique</span></td></tr></tbody>
           </table>
           
         <p class="cv-legend">
@@ -393,7 +422,7 @@
           <span class="cv-pill cv-moderate">moderate 15–35%</span>
           <span class="cv-pill cv-loose">loose &gt;35%</span>
           &nbsp; CV% = std / |mean| × 100
-        </p>
+        </p><p class="cv-legend">◆ used for clustering &nbsp;·&nbsp; ◇ display only</p>
         </section>
 
         <section>
@@ -402,7 +431,7 @@
             <div class="profile-block">
               <h3>region</h3>
               <table class="data-table">
-                <thead><tr><th>Category</th><th style="color:#16a34a">Cluster 0</th><th style="color:#ca8a04">Cluster 1</th><th style="color:#0891b2">Cluster 2</th><th style="color:#9333ea">Cluster 3</th><th style="color:#dc2626">Cluster 4</th></tr></thead>
+                <thead><tr><th>Category</th><th style="color:#16a34a">Cluster 0</th><th style="color:#ca8a04">Cluster 1</th><th style="color:#0891b2">Cluster 2</th><th style="color:#9333ea">Cluster 3</th></tr></thead>
                 <tbody><tr><td class='col-name'>East</td><td>
                       <div class="bar-wrap">
                         <div class="bar-fill" style="width:0%;background:#16a34a"></div>
@@ -410,24 +439,19 @@
                       <span class="pct-label">0%</span>
                     </td><td>
                       <div class="bar-wrap">
-                        <div class="bar-fill" style="width:0%;background:#ca8a04"></div>
+                        <div class="bar-fill" style="width:97%;background:#ca8a04"></div>
+                      </div>
+                      <span class="pct-label">97%</span>
+                    </td><td>
+                      <div class="bar-wrap">
+                        <div class="bar-fill" style="width:6%;background:#0891b2"></div>
+                      </div>
+                      <span class="pct-label">6%</span>
+                    </td><td>
+                      <div class="bar-wrap">
+                        <div class="bar-fill" style="width:0%;background:#9333ea"></div>
                       </div>
                       <span class="pct-label">0%</span>
-                    </td><td>
-                      <div class="bar-wrap">
-                        <div class="bar-fill" style="width:100%;background:#0891b2"></div>
-                      </div>
-                      <span class="pct-label">100%</span>
-                    </td><td>
-                      <div class="bar-wrap">
-                        <div class="bar-fill" style="width:5%;background:#9333ea"></div>
-                      </div>
-                      <span class="pct-label">5%</span>
-                    </td><td>
-                      <div class="bar-wrap">
-                        <div class="bar-fill" style="width:80%;background:#dc2626"></div>
-                      </div>
-                      <span class="pct-label">80%</span>
                     </td></tr><tr><td class='col-name'>North</td><td>
                       <div class="bar-wrap">
                         <div class="bar-fill" style="width:100%;background:#16a34a"></div>
@@ -435,24 +459,19 @@
                       <span class="pct-label">100%</span>
                     </td><td>
                       <div class="bar-wrap">
-                        <div class="bar-fill" style="width:0%;background:#ca8a04"></div>
+                        <div class="bar-fill" style="width:3%;background:#ca8a04"></div>
+                      </div>
+                      <span class="pct-label">3%</span>
+                    </td><td>
+                      <div class="bar-wrap">
+                        <div class="bar-fill" style="width:92%;background:#0891b2"></div>
+                      </div>
+                      <span class="pct-label">92%</span>
+                    </td><td>
+                      <div class="bar-wrap">
+                        <div class="bar-fill" style="width:0%;background:#9333ea"></div>
                       </div>
                       <span class="pct-label">0%</span>
-                    </td><td>
-                      <div class="bar-wrap">
-                        <div class="bar-fill" style="width:0%;background:#0891b2"></div>
-                      </div>
-                      <span class="pct-label">0%</span>
-                    </td><td>
-                      <div class="bar-wrap">
-                        <div class="bar-fill" style="width:88%;background:#9333ea"></div>
-                      </div>
-                      <span class="pct-label">88%</span>
-                    </td><td>
-                      <div class="bar-wrap">
-                        <div class="bar-fill" style="width:9%;background:#dc2626"></div>
-                      </div>
-                      <span class="pct-label">9%</span>
                     </td></tr><tr><td class='col-name'>West</td><td>
                       <div class="bar-wrap">
                         <div class="bar-fill" style="width:0%;background:#16a34a"></div>
@@ -460,28 +479,455 @@
                       <span class="pct-label">0%</span>
                     </td><td>
                       <div class="bar-wrap">
-                        <div class="bar-fill" style="width:77%;background:#ca8a04"></div>
-                      </div>
-                      <span class="pct-label">77%</span>
-                    </td><td>
-                      <div class="bar-wrap">
-                        <div class="bar-fill" style="width:0%;background:#0891b2"></div>
+                        <div class="bar-fill" style="width:0%;background:#ca8a04"></div>
                       </div>
                       <span class="pct-label">0%</span>
                     </td><td>
                       <div class="bar-wrap">
-                        <div class="bar-fill" style="width:7%;background:#9333ea"></div>
+                        <div class="bar-fill" style="width:2%;background:#0891b2"></div>
                       </div>
-                      <span class="pct-label">7%</span>
+                      <span class="pct-label">2%</span>
                     </td><td>
                       <div class="bar-wrap">
-                        <div class="bar-fill" style="width:1%;background:#dc2626"></div>
+                        <div class="bar-fill" style="width:74%;background:#9333ea"></div>
                       </div>
-                      <span class="pct-label">1%</span>
-                    </td></tr><tr><td colspan="6" class="more-note">… 1 more category not shown</td></tr></tbody>
+                      <span class="pct-label">74%</span>
+                    </td></tr><tr><td colspan="5" class="more-note">… 1 more category not shown</td></tr></tbody>
               </table>
             </div>
         </section>
+
+        <section>
+          <h2>Cluster Visualisations <span class="subtitle">6 views — hover for values</span></h2>
+          <div class="plot-grid" id="plot-grid"></div>
+          <canvas id="c-donut"   width="320" height="320" style="display:none"></canvas>
+          <canvas id="c-heatmap" width="600" height="260" style="display:none"></canvas>
+          <canvas id="c-parallel"width="600" height="260" style="display:none"></canvas>
+          <canvas id="c-cvbar"   width="600" height="260" style="display:none"></canvas>
+          <canvas id="c-scatter" width="600" height="600" style="display:none"></canvas>
+          <canvas id="c-strbar"  width="600" height="260" style="display:none"></canvas>
+        </section>
+
+        <script>
+        (function() {
+          const PALETTE  = ["#16a34a", "#ca8a04", "#0891b2", "#9333ea"];
+          const K        = 4;
+          const CL_NAMES = ["Cluster 0", "Cluster 1", "Cluster 2", "Cluster 3"];
+          const DONUT    = [738, 2302, 881, 1971];
+          const HMAP     = [[85.716, 43998.8685], [57.8732, 19185.3116], [28.5245, 34068.3751], [50.9194, 20396.9019]];
+          const HMAP_C   = ["engagement_score", "lifetime_value"];
+          const PC       = [[1.0, 1.0], [0.5132, 0.0], [0.0, 0.5998], [0.3916, 0.0488]];
+          const PC_C     = ["engagement_score", "lifetime_value"];
+          const CV       = [[16.69, 11.28], [15.83, 21.6], [59.56, 16.25], [23.03, 15.18]];
+          const CV_C     = ["engagement_score", "lifetime_value"];
+          const SC       = [[[75.61, 37218.16], [99.86, 41004.51], [100.68, 48472.97], [99.38, 43089.2], [77.38, 42247.72], [99.09, 51627.3], [70.14, 49106.5], [63.38, 40814.55], [100.5, 45937.64], [79.34, 37160.88], [92.93, 40238.3], [85.99, 42670.48], [65.6, 51023.4], [89.26, 39028.97], [78.35, 40331.57], [72.3, 44375.72], [90.96, 41116.08], [63.3, 39707.84], [86.88, 42404.74], [61.15, 38197.11], [79.63, 49540.9], [72.87, 41935.31], [94.32, 38331.23], [99.85, 50056.97], [100.43, 48928.18], [91.09, 41445.81], [82.51, 41712.3], [75.21, 41875.3], [59.77, 48563.53], [86.64, 42875.63], [99.06, 42889.44], [91.67, 43733.52], [84.24, 43363.38], [60.64, 42062.31], [94.94, 42021.71], [100.43, 49253.14], [78.6, 46229.2], [60.52, 34534.64], [100.22, 49814.2], [91.59, 45194.23], [79.85, 45048.67], [93.89, 44610.67], [93.93, 41594.7], [72.71, 40708.24], [100.91, 45751.04], [98.97, 52581.0], [70.23, 42166.74], [100.95, 48041.47], [98.72, 52162.5], [98.72, 42361.44], [97.8, 52085.1], [89.41, 42874.42], [64.34, 36643.47], [100.36, 48890.23], [70.23, 48400.13], [72.03, 42088.66], [78.93, 42273.27], [100.42, 47658.32], [67.67, 45554.49], [75.47, 41437.51], [76.15, 47517.23], [79.74, 46297.81], [81.17, 37408.83], [72.51, 49522.63], [86.22, 36207.19], [92.56, 42459.48], [84.74, 39098.48], [78.46, 51613.79], [61.42, 41232.98], [87.3, 37611.2], [99.89, 41341.66], [87.68, 39060.35], [94.12, 38173.26], [58.93, 38855.86], [100.03, 50343.04], [99.24, 51395.27], [70.33, 37850.69], [98.91, 50918.18], [60.37, 47524.94], [63.86, 33882.4], [100.91, 47452.7], [59.7, 35714.22], [93.7, 43560.23], [90.67, 41253.5], [100.12, 41536.38], [90.97, 42611.62], [99.66, 42805.13], [65.11, 44878.06], [58.47, 40444.91], [101.12, 46276.22], [100.08, 50749.49], [87.85, 38698.38], [90.4, 42573.56], [99.41, 52622.99], [100.99, 48508.32], [64.17, 40827.31], [99.67, 50819.48], [77.98, 44992.95], [99.76, 50277.69], [76.37, 48836.63], [100.96, 47645.88], [66.16, 36536.21], [67.4, 34549.63], [67.2, 49662.4], [84.95, 41565.68], [77.89, 50922.12], [92.83, 41607.06], [87.11, 36483.18], [91.82, 43080.32], [82.78, 38912.44], [100.74, 47550.66], [82.87, 41967.88], [58.6, 44684.57], [98.82, 52876.48], [99.49, 52196.27], [84.08, 37785.48], [100.66, 41212.44], [75.17, 41751.73], [99.3, 44153.35], [53.63, 46681.15], [94.26, 42358.41], [65.92, 36746.49], [100.04, 41624.37], [86.9, 43349.57], [92.11, 41949.7], [100.47, 40847.89], [99.44, 51741.16], [100.29, 50161.15], [91.38, 46719.2], [74.29, 35041.33], [98.24, 43071.73], [86.68, 36321.44], [96.25, 50818.45], [83.82, 43537.58], [98.73, 51195.11], [98.86, 51803.34], [60.7, 40577.18], [73.02, 37919.85], [66.37, 44329.86], [64.29, 36985.31], [91.99, 44426.22], [76.99, 41737.51], [97.25, 45203.84], [87.98, 42708.39], [99.56, 51092.67], [100.92, 49815.69], [99.7, 41309.79], [101.18, 47303.34], [101.41, 46984.72], [98.44, 42970.34], [100.21, 48594.52], [90.69, 42464.43], [86.85, 50058.76], [71.11, 34724.79], [100.7, 48225.09], [95.41, 40312.57], [99.35, 52327.82], [84.22, 34455.52], [100.49, 41032.63], [99.29, 50241.15], [95.53, 47084.44], [88.2, 41957.83], [98.93, 51262.87], [99.99, 43043.57], [90.5, 40036.42], [69.48, 40392.92], [94.37, 40904.33], [60.58, 46229.34], [99.78, 51946.8], [82.26, 45296.51], [62.3, 34630.79], [66.16, 48279.17], [66.91, 41807.95], [69.74, 50036.05], [94.7, 42428.67], [99.37, 50630.63], [96.96, 43345.42], [68.27, 42458.37], [99.88, 50912.71], [100.77, 48758.26], [99.49, 43183.54], [79.35, 42207.21], [96.18, 42741.82], [88.53, 43551.66], [100.36, 48489.44], [67.73, 39455.19], [75.62, 36873.81], [91.41, 42647.56], [100.04, 42014.1], [66.35, 50489.49], [57.06, 44062.36], [100.38, 41111.31], [94.09, 44048.69], [75.05, 41694.79], [84.72, 38642.31], [99.25, 50779.05], [83.02, 41774.1], [101.21, 47126.33], [100.06, 43749.52], [78.85, 42750.48], [100.69, 48029.52], [88.58, 42542.68], [63.21, 40467.81], [99.65, 52086.6], [93.84, 39332.66], [70.72, 41927.6], [79.36, 42550.88], [64.33, 44346.43], [74.26, 41770.85], [63.7, 41992.99], [90.69, 41904.03], [99.34, 43830.48], [95.63, 42726.0], [95.72, 45453.15], [70.06, 42423.47], [99.48, 51370.48], [100.51, 48664.66], [92.89, 42334.56], [78.41, 42051.87], [74.92, 35009.15], [87.13, 41219.62], [91.17, 40781.53], [59.73, 36963.56], [97.28, 42451.31], [92.52, 43012.6], [77.24, 36760.39], [100.73, 46433.27], [99.56, 41652.93], [100.32, 48900.32], [99.08, 50854.78], [70.53, 49031.22], [99.45, 52175.11], [59.93, 35377.02], [100.44, 48082.14], [100.85, 46911.02], [100.92, 46943.66], [61.96, 36068.58], [96.33, 46993.28], [74.94, 35512.81], [62.23, 45091.63], [96.88, 39706.47], [86.93, 42283.35], [88.87, 51293.96], [73.5, 35731.08], [72.31, 42058.76], [84.26, 38424.5], [96.99, 40844.34], [96.87, 46963.98], [97.08, 50842.13], [98.95, 50300.47], [60.05, 38004.55], [78.28, 36195.3], [93.57, 45044.11], [100.03, 48797.3], [86.45, 49922.01], [66.2, 41019.16], [99.89, 49066.32], [57.18, 46794.38], [98.61, 51818.61], [83.45, 42838.42], [101.02, 48049.17], [58.51, 39803.34], [88.58, 42219.12], [96.87, 38864.74], [100.19, 41211.16], [64.11, 47927.2], [68.78, 42843.56], [100.37, 48311.79], [93.38, 45033.9], [99.2, 42319.14], [83.18, 42208.72], [74.51, 42064.49], [90.47, 39753.91], [83.39, 44038.0], [75.71, 48297.07], [89.48, 40463.1], [90.67, 40251.9], [76.19, 37823.2], [77.41, 41414.8], [59.0, 47169.62], [95.05, 40674.46], [71.16, 41735.55], [100.29, 49693.12], [81.37, 41260.1], [100.41, 48130.76], [100.57, 49200.33], [77.33, 36118.53], [98.41, 51923.31], [56.59, 44673.58], [99.1, 41464.82], [93.73, 42656.56], [62.66, 38450.42], [55.64, 47823.27], [88.67, 45532.52], [64.81, 34521.05], [81.24, 41348.66], [70.47, 42416.42], [93.23, 39975.57], [98.56, 47420.38], [99.79, 51280.94], [99.76, 50153.71], [76.67, 35386.71], [81.88, 47866.39], [94.81, 44220.33], [87.06, 43597.84], [92.31, 38948.66], [74.81, 38504.6], [92.76, 38362.61], [84.53, 45594.07], [83.33, 41865.88], [63.84, 41277.23], [99.14, 39978.73], [63.32, 42284.77], [66.57, 40301.48], [99.58, 49322.48], [92.82, 39251.22], [98.35, 46398.49], [75.26, 52174.28], [62.5, 40027.29], [88.29, 46085.06], [75.8, 38121.3], [93.82, 44476.04], [99.89, 41498.88], [73.54, 49716.22], [99.34, 51108.2], [88.83, 38170.63], [100.94, 47526.85], [94.38, 43412.11], [99.27, 52629.17], [99.46, 42540.41], [76.99, 45073.26], [99.46, 51486.84], [72.26, 35672.87], [99.77, 50942.42], [99.49, 42348.81], [89.45, 51227.96], [101.23, 46693.41], [79.92, 43927.19], [100.61, 48991.73], [81.06, 37872.24], [67.14, 42783.25], [100.67, 40651.37], [68.53, 40716.38], [83.76, 39988.58], [99.59, 51333.84], [66.9, 39901.65], [99.17, 51817.02], [70.87, 48403.26], [100.46, 50640.92], [98.96, 53284.16], [96.5, 45234.16], [77.12, 42286.38], [100.65, 48104.61], [92.16, 50273.96], [69.64, 36597.54], [71.85, 41596.45], [53.4, 44849.79], [87.49, 43449.74], [99.61, 42059.23], [68.46, 48632.93], [81.2, 38053.76], [95.59, 51573.97], [94.85, 41942.05], [64.12, 35133.28], [70.4, 37524.63], [100.09, 49544.97], [100.55, 47123.14], [99.46, 49521.69], [57.71, 45526.1], [100.24, 47899.73], [68.57, 35943.06], [66.37, 33501.79], [73.44, 35622.03], [99.2, 51475.1], [86.72, 46447.32], [61.59, 46630.92], [88.56, 41147.3], [92.54, 43843.07], [100.27, 50564.93], [87.63, 50807.63], [98.89, 51686.3], [99.0, 51517.68], [66.06, 43695.15], [91.42, 52148.73], [75.63, 40909.92], [71.34, 41390.76], [83.9, 35270.14], [100.65, 48140.23], [79.79, 38014.89], [100.55, 48907.79], [56.75, 48523.8], [88.43, 50250.87], [83.35, 42157.81], [80.6, 44153.83], [99.24, 52224.84], [99.98, 41725.47], [65.71, 49013.33], [60.71, 36505.08], [60.44, 44425.89], [79.79, 37341.54], [68.5, 36386.83], [99.85, 49480.77], [100.67, 40383.55], [89.45, 39222.34], [98.42, 46076.74], [100.89, 47251.03], [75.18, 47865.6], [65.44, 41334.18], [60.82, 43627.29], [82.89, 36541.85], [64.52, 41277.39], [99.57, 43946.99], [99.81, 50910.09], [99.31, 51742.74], [54.66, 45812.24], [100.23, 49092.93], [99.38, 51625.71], [99.23, 52636.37], [100.39, 42677.86], [78.59, 36943.06], [96.96, 41819.73], [99.07, 42490.93], [90.76, 40233.57], [99.88, 49780.03], [100.03, 41122.5], [57.96, 43770.57], [72.14, 44366.43], [62.94, 45693.01], [92.02, 51265.74], [93.66, 50249.48], [65.49, 39562.9], [99.78, 40403.19], [85.61, 39657.18], [99.36, 43165.66], [96.82, 42506.7], [75.44, 49732.9], [94.88, 52359.54], [70.72, 42123.59], [66.87, 36856.23], [100.76, 47951.94], [88.27, 42686.12], [80.13, 42053.94], [69.87, 35596.31], [95.37, 43140.69], [89.06, 50563.74], [76.4, 35559.67], [101.02, 48659.81], [85.87, 38771.08], [99.51, 51722.61], [100.45, 50763.3], [57.66, 49112.8], [94.49, 45145.68], [100.41, 41632.77], [99.32, 52555.69], [67.8, 37713.67], [68.4, 41770.27], [64.87, 35829.26], [80.9, 38512.3], [100.16, 48708.71], [100.21, 42599.9], [79.79, 36745.48], [87.0, 50229.35], [74.45, 41886.59], [60.09, 39458.55], [82.01, 36940.88], [99.9, 43032.97], [88.22, 46663.94], [99.01, 51647.57], [66.84, 39586.16], [99.51, 50344.07], [66.54, 48213.27], [61.49, 39827.02], [99.35, 51342.9], [99.0, 42889.48], [94.47, 41768.17], [94.21, 42450.41], [98.29, 46832.21], [100.7, 40946.58], [99.79, 51474.17], [99.83, 51009.08], [62.94, 40843.65], [76.28, 44066.6], [64.64, 45148.44], [100.07, 47785.59], [70.2, 48861.92], [99.95, 43620.57], [100.63, 49111.5], [81.02, 44559.06], [90.17, 40396.73], [72.24, 43523.6], [92.01, 42229.04], [81.91, 42496.1], [67.76, 46275.21], [93.68, 40954.75], [91.85, 50618.24], [100.73, 48664.54], [77.72, 37879.06], [66.28, 43447.31], [99.98, 43193.37], [75.77, 40754.55], [100.68, 48038.23], [100.38, 49046.51], [76.17, 42652.96], [60.54, 41299.57], [54.02, 44817.95], [99.24, 43797.11], [73.55, 35171.1], [67.58, 46885.18], [93.88, 41484.12], [99.25, 52036.24], [83.5, 36946.49], [99.49, 51656.34], [62.23, 43101.96], [67.46, 36674.48], [82.48, 49822.38], [91.01, 42922.63], [99.62, 50375.18], [67.77, 42150.34], [67.6, 34250.26], [73.0, 44645.84], [84.02, 42557.95], [81.9, 43254.06], [98.04, 42572.83], [100.5, 49572.62], [89.85, 40744.28], [85.97, 39566.84], [84.24, 44031.79], [63.72, 39446.12], [62.06, 34081.06], [100.22, 49966.43], [66.77, 48782.32], [89.26, 50064.22], [82.88, 49435.8], [99.7, 42814.63], [101.16, 48023.04], [100.32, 41060.64], [54.98, 45989.29], [84.69, 41586.22], [92.77, 41375.39], [69.94, 37119.63], [71.78, 50269.74], [70.99, 50085.87], [99.39, 44257.25], [66.78, 44582.72], [57.36, 39464.41], [93.58, 42597.48], [72.03, 49124.04], [62.01, 38250.13], [82.0, 50482.32], [50.99, 48089.08], [76.88, 36732.97], [98.44, 51791.42], [97.27, 46503.28], [101.02, 47316.2], [58.75, 38709.47], [82.26, 38211.34], [92.52, 52371.74], [86.54, 44011.64], [100.02, 39708.23], [99.3, 53243.89], [86.12, 43998.28], [72.32, 37806.21], [99.01, 42899.62], [89.97, 47098.2], [100.23, 46183.51], [100.69, 49231.84], [100.46, 48417.92], [98.67, 50496.0], [99.32, 51680.05], [63.75, 36657.3], [73.58, 36836.41], [71.3, 47630.33], [98.66, 53517.02], [99.71, 51897.11], [101.24, 46501.36], [84.08, 37342.79], [61.51, 39487.29], [88.19, 25847.7], [83.24, 36146.36], [95.32, 45483.76], [99.29, 43355.23], [89.83, 47124.44], [100.06, 41838.18], [100.3, 41133.48], [76.37, 36031.38], [82.88, 41754.23], [77.65, 36658.34], [94.25, 42966.16], [94.51, 40654.78], [69.57, 34034.05], [94.25, 41559.72], [100.04, 42336.52], [98.98, 51140.6], [99.45, 51804.61], [99.69, 43155.07], [82.95, 41270.23], [77.15, 42258.14], [98.7, 40353.97], [100.08, 51391.73], [83.14, 40633.84], [100.38, 40821.1], [90.02, 41984.84], [99.98, 50235.11], [98.64, 46792.69], [72.63, 40847.79], [79.88, 47885.57], [92.06, 42281.87], [54.4, 49933.47], [93.11, 46510.72], [75.0, 36527.46], [98.13, 51843.87], [100.09, 41537.2], [100.24, 48638.3], [99.67, 41790.19], [87.98, 39848.31], [87.41, 43628.08], [64.14, 44957.81], [100.3, 47235.71], [85.61, 41607.47], [84.5, 46434.53], [91.59, 44964.65], [77.36, 37603.86], [94.01, 51293.56], [71.53, 36706.08], [99.11, 43104.91], [99.2, 42821.18], [100.16, 39977.91], [100.08, 51491.43], [99.22, 41021.54], [83.6, 43311.29], [97.63, 38998.9], [100.26, 48866.89], [99.48, 51627.45], [100.65, 48929.19], [99.49, 50954.12], [98.97, 52306.98], [52.96, 45924.66], [99.83, 43481.53], [100.13, 50527.05], [97.03, 43794.16], [66.21, 39217.34], [70.89, 34851.56], [70.13, 45997.14], [99.53, 41136.44], [97.83, 44151.75], [86.43, 42928.46], [78.34, 28987.16], [99.89, 46324.06], [100.41, 40724.45], [91.27, 42616.55], [100.64, 42314.1], [100.71, 41167.21], [89.77, 42476.19], [69.46, 49810.66], [99.04, 41575.95], [99.5, 46607.41], [89.37, 40029.39], [88.56, 42353.31], [68.29, 40791.66], [57.63, 49312.17], [72.75, 44973.66], [66.46, 33372.06], [98.01, 41345.68], [69.73, 32761.56], [98.65, 51925.03], [95.2, 40613.84], [100.06, 48365.13], [74.84, 43353.12], [78.77, 39384.22], [96.24, 42457.01], [99.43, 53064.65], [63.95, 35893.12], [100.74, 50316.6], [52.91, 45992.72], [100.74, 47853.21], [100.39, 48350.85], [77.22, 37368.2], [88.08, 37580.2], [62.1, 40756.19], [100.92, 45742.68], [100.26, 42181.77], [99.48, 51093.12], [87.71, 39191.15], [74.65, 49455.53], [72.15, 42809.54], [99.81, 50216.42], [101.02, 47704.69], [100.23, 42091.39], [75.61, 42006.78], [74.78, 42471.54], [62.9, 46723.68], [61.07, 33567.0], [63.25, 33910.57], [57.02, 40272.48], [99.05, 51368.5], [73.79, 35138.44], [89.04, 43495.21], [64.71, 40354.26], [85.9, 45902.67], [100.61, 46114.45], [96.96, 50909.63], [96.16, 44457.9], [73.25, 48638.77], [60.39, 35397.04], [74.91, 45888.63], [61.67, 36000.72], [101.05, 47589.56], [65.16, 36310.41], [84.42, 46277.65], [93.54, 40644.22], [55.62, 46672.3], [98.86, 51426.92], [69.29, 35483.57], [101.01, 39012.56], [63.15, 34858.47], [84.32, 46507.61], [99.17, 52030.97], [99.98, 50091.84], [62.09, 40547.72], [68.54, 38746.02], [99.66, 43154.83], [99.01, 40011.74], [90.03, 50012.67], [68.75, 41101.58], [56.16, 46727.46], [100.88, 47732.85], [94.99, 43261.29], [99.81, 43647.0], [86.77, 39985.36], [100.8, 39223.47], [100.5, 47190.37], [80.07, 38917.19], [88.87, 46184.22], [100.12, 49342.17], [99.96, 42440.65], [101.32, 48348.85], [60.83, 48749.5], [99.06, 52282.95]], [[61.45, 13914.04], [72.29, 24402.02], [41.22, 21071.11], [48.35, 10949.01], [67.45, 21945.13], [40.88, 21123.67], [66.77, 23508.2], [67.24, 22168.38], [66.49, 15205.2], [55.44, 22356.01], [54.39, 20033.46], [56.42, 21077.62], [57.11, 19495.04], [68.91, 21892.5], [65.56, 22464.44], [45.52, 21165.81], [62.13, 23347.16], [71.37, 25287.12], [58.23, 23311.69], [47.22, 22496.12], [54.15, 15364.15], [56.3, 13269.71], [49.64, 17900.47], [57.34, 17085.19], [47.47, 26890.32], [68.41, 21900.21], [71.92, 20065.53], [61.89, 22643.6], [52.8, 15499.8], [53.58, 10966.08], [60.14, 23439.93], [61.36, 22843.55], [70.89, 22960.29], [47.06, 17746.13], [74.22, 13601.96], [44.38, 21659.82], [63.0, 22444.48], [66.74, 23332.3], [46.54, 20617.51], [51.76, 10687.39], [71.96, 22777.83], [45.05, 18861.14], [70.17, 22563.88], [68.14, 18357.35], [47.98, 18529.15], [41.07, 22396.87], [65.32, 22745.19], [50.68, 21172.87], [56.74, 12532.52], [56.87, 22166.71], [63.36, 13999.41], [52.85, 17236.04], [62.94, 20576.13], [67.34, 22790.0], [55.91, 23047.29], [64.03, 22356.67], [54.57, 18817.65], [50.85, 19672.61], [69.34, 23130.68], [53.34, 23895.88], [62.24, 16687.12], [54.49, 18681.55], [64.3, 22236.02], [70.87, 23314.47], [61.96, 20234.09], [50.58, 13666.65], [71.1, 13197.24], [62.29, 16783.81], [73.43, 22254.87], [54.67, 17573.47], [51.26, 18460.27], [53.96, 18440.93], [46.14, 17249.62], [51.36, 19977.64], [66.47, 20739.84], [62.02, 21058.56], [47.97, 19758.9], [40.95, 12443.29], [66.86, 23691.29], [59.03, 14030.94], [53.52, 15281.57], [66.84, 21925.8], [58.25, 21343.83], [71.83, 24719.47], [61.42, 23533.91], [49.05, 22003.32], [62.98, 17110.57], [59.5, 18351.55], [67.05, 22158.31], [49.14, 16621.04], [62.99, 17455.13], [60.26, 23738.1], [48.34, 18715.93], [66.78, 21840.08], [67.34, 24670.85], [37.53, 18040.93], [66.21, 21958.66], [58.98, 23764.2], [58.96, 22953.25], [39.44, 20946.18], [70.2, 22309.16], [64.31, 20161.77], [60.48, 20910.43], [48.78, 13383.28], [67.37, 24672.63], [50.22, 13423.49], [65.71, 23307.41], [43.43, 12724.91], [48.37, 12507.44], [51.34, 18051.75], [61.43, 19418.77], [67.35, 23301.76], [53.06, 19764.84], [62.11, 21259.55], [66.27, 17754.98], [60.59, 11806.78], [59.82, 22771.46], [34.93, 14240.37], [59.61, 16797.11], [51.82, 11256.37], [55.42, 21833.28], [60.64, 20290.7], [72.64, 15628.82], [68.05, 20500.41], [40.83, 11458.0], [66.32, 13280.53], [67.13, 13268.79], [55.16, 11704.22], [78.05, 23752.58], [51.76, 16007.85], [67.19, 22815.0], [59.42, 19145.96], [73.34, 23624.86], [38.35, 11966.64], [60.09, 16030.98], [59.43, 22226.43], [62.79, 22988.84], [38.05, 18578.87], [43.21, 15788.27], [58.01, 16839.25], [50.91, 21199.8], [58.2, 11828.41], [55.02, 20032.15], [53.9, 10871.52], [54.44, 21296.13], [74.65, 23525.52], [63.25, 22795.26], [47.01, 28826.48], [68.06, 23105.38], [53.59, 19004.32], [45.4, 18201.54], [66.47, 25248.91], [54.32, 19594.33], [57.53, 13384.36], [46.87, 22005.42], [59.37, 21366.3], [56.2, 21244.43], [71.15, 24336.68], [69.73, 21652.29], [54.24, 11160.83], [61.28, 15059.0], [57.3, 19638.82], [52.12, 15905.44], [49.06, 18009.98], [54.44, 18010.56], [62.79, 13611.27], [56.6, 20623.9], [58.08, 22794.37], [58.27, 15302.6], [58.13, 12535.26], [63.29, 22948.35], [42.95, 21333.61], [70.83, 22064.37], [60.16, 22408.5], [46.92, 26240.25], [63.18, 13239.11], [56.94, 12068.45], [43.07, 18458.84], [59.63, 21761.4], [69.51, 22988.28], [70.86, 24238.14], [50.19, 20375.83], [55.27, 20539.47], [66.15, 13238.54], [73.01, 15686.35], [50.63, 22782.41], [51.49, 19675.26], [84.78, 26183.9], [41.69, 20040.87], [55.73, 23169.9], [63.59, 11028.87], [50.9, 16628.24], [57.76, 16213.76], [55.36, 15087.39], [59.03, 20834.16], [51.35, 18193.01], [67.03, 24456.79], [78.22, 23735.75], [80.5, 21190.94], [61.35, 11366.1], [60.09, 18028.81], [53.72, 13018.76], [62.3, 23425.89], [50.34, 20926.41], [38.19, 20186.84], [68.78, 20224.65], [68.33, 19539.16], [69.69, 21944.28], [75.3, 24717.06], [50.72, 22089.89], [58.23, 11126.9], [50.34, 18335.75], [51.14, 18836.56], [58.48, 21681.27], [55.18, 14422.22], [53.65, 15376.35], [51.54, 21319.86], [53.53, 16076.79], [79.68, 16178.65], [66.25, 18628.81], [64.32, 24541.08], [51.53, 20482.25], [54.48, 15714.65], [59.65, 22340.4], [81.77, 23200.25], [67.25, 20320.26], [62.06, 12798.57], [45.95, 13767.49], [66.74, 23595.5], [53.47, 22058.1], [55.91, 20222.77], [49.58, 16415.55], [62.94, 24967.27], [66.55, 23853.86], [56.75, 10853.29], [57.16, 11338.07], [49.73, 14841.72], [48.35, 22788.74], [48.88, 16236.02], [67.09, 12518.27], [51.11, 16833.1], [56.45, 14842.77], [74.19, 12824.84], [65.54, 23876.16], [56.71, 16543.85], [65.75, 22896.62], [57.36, 11643.58], [63.46, 22074.63], [62.42, 16992.45], [57.39, 11623.38], [45.73, 19210.69], [73.54, 13617.58], [53.17, 16608.83], [60.21, 22595.4], [66.2, 20810.35], [64.45, 15954.08], [69.0, 22299.18], [57.44, 16460.1], [41.96, 22713.99], [76.65, 15907.95], [60.67, 19551.34], [70.5, 22108.64], [69.78, 25341.79], [64.3, 18640.63], [52.18, 19085.89], [45.0, 19144.04], [71.27, 17307.52], [50.58, 14043.15], [53.51, 20037.19], [59.9, 21019.78], [59.59, 16472.53], [56.04, 19577.29], [63.59, 21777.46], [57.0, 14361.07], [44.41, 15570.29], [59.36, 19393.4], [49.7, 22993.92], [60.94, 12834.36], [49.72, 18765.25], [46.97, 18651.46], [75.17, 14703.61], [69.83, 22690.92], [65.79, 26071.39], [51.44, 22366.55], [69.17, 12956.03], [56.36, 12991.94], [47.76, 22978.5], [72.45, 21756.37], [68.86, 19954.13], [56.54, 21610.73], [83.65, 24349.64], [58.26, 18125.35], [76.47, 23242.78], [74.2, 24895.29], [52.75, 14012.22], [55.36, 13089.21], [74.69, 17708.05], [51.42, 23706.97], [50.3, 26935.76], [51.97, 18800.75], [67.11, 17385.78], [46.72, 10488.35], [62.13, 13127.09], [52.53, 14235.15], [56.67, 18228.55], [45.25, 20208.44], [67.04, 13961.32], [64.84, 24791.95], [54.78, 11084.08], [62.73, 23008.76], [61.93, 20744.83], [56.68, 11698.29], [60.11, 21724.16], [59.9, 19458.87], [42.29, 19542.45], [84.21, 16911.8], [47.37, 16251.86], [39.47, 14851.12], [55.48, 21995.64], [64.67, 24497.46], [51.16, 16300.17], [61.35, 20219.22], [61.2, 21238.01], [54.99, 20398.94], [40.54, 22320.23], [59.8, 9642.34], [63.5, 22425.76], [49.51, 12089.39], [44.0, 15329.71], [55.52, 17292.78], [64.89, 24238.32], [42.34, 16066.37], [46.41, 18433.42], [64.9, 24620.59], [66.51, 23748.74], [38.55, 16581.73], [60.76, 22713.17], [59.2, 13404.35], [61.38, 11801.89], [57.78, 14667.25], [53.05, 17691.45], [63.34, 22159.7], [54.06, 21239.23], [61.5, 22141.93], [64.93, 21846.57], [55.57, 11816.16], [57.09, 22552.15], [49.05, 20163.4], [67.84, 21449.32], [56.85, 11121.43], [54.29, 13573.36], [67.65, 24120.49], [54.82, 19338.28], [53.72, 22939.22], [62.27, 21453.1], [67.23, 21921.46], [46.01, 10517.53], [56.43, 22328.67], [58.65, 13403.51], [49.75, 12102.94], [67.01, 21962.08], [56.82, 23716.93], [59.97, 21851.39], [52.6, 13955.94], [64.92, 16696.8], [56.01, 20286.16], [44.85, 16883.15], [70.62, 23667.69], [63.19, 14015.5], [62.44, 23360.79], [47.87, 13296.24], [58.61, 23680.6], [37.18, 25062.37], [63.25, 21294.75], [57.43, 20969.31], [49.44, 19643.95], [66.63, 20793.64], [59.37, 11456.65], [51.88, 16905.19], [53.08, 23136.46], [77.61, 25952.73], [59.79, 21306.99], [85.6, 17026.23], [49.09, 12690.02], [50.92, 15045.71], [52.24, 15824.35], [66.17, 22077.32], [48.67, 22912.92], [54.21, 22743.23], [56.69, 23648.28], [53.8, 13484.38], [45.48, 18642.44], [58.02, 22114.74], [61.61, 24012.9], [53.99, 21282.24], [50.94, 12819.99], [59.3, 18801.68], [66.8, 21620.61], [59.17, 13288.01], [52.62, 12372.53], [50.66, 21018.71], [70.53, 23641.24], [54.02, 23109.01], [54.51, 17051.9], [75.97, 23743.9], [55.74, 11548.42], [56.45, 12827.74], [63.4, 25331.18], [78.59, 23893.21], [65.15, 16302.38], [61.83, 23358.74], [64.7, 22271.77], [61.27, 22108.94], [40.16, 20716.07], [64.92, 16694.43], [68.55, 23384.46], [62.97, 21000.37], [76.32, 22713.07], [63.52, 22629.86], [43.49, 16341.41], [48.59, 19443.96], [47.99, 21102.56], [60.1, 10066.24], [50.06, 13917.72], [70.69, 22838.2], [45.62, 19680.63], [59.48, 23908.65], [72.62, 21596.5], [74.99, 22105.34], [45.66, 20702.45], [56.39, 12722.37], [56.82, 19286.11], [56.84, 21852.25], [52.94, 10811.84], [55.76, 16943.72], [61.88, 24699.67], [46.74, 27880.54], [74.84, 23189.87], [49.77, 12091.83], [50.32, 19816.86], [56.13, 12556.96], [51.78, 19520.52], [71.52, 21696.75], [41.97, 17788.44], [55.43, 17261.25], [59.75, 19709.15], [49.8, 11218.0], [70.11, 17880.67], [50.42, 22185.44], [45.69, 18998.11], [40.66, 14720.89], [58.69, 20914.15], [51.18, 19825.65], [54.23, 11108.63], [54.37, 12382.39], [58.56, 12610.95], [48.4, 17331.08], [63.4, 18360.06], [57.02, 18752.19], [61.89, 18822.05], [57.82, 16341.36], [67.01, 23665.07], [49.56, 14483.59], [76.14, 22720.46], [50.59, 21500.68], [56.06, 23565.33], [55.14, 19947.01], [39.97, 18765.02], [63.67, 23435.27], [65.8, 23262.76], [60.65, 15876.05], [62.94, 20331.65], [50.34, 13250.7], [45.9, 17705.87], [58.62, 23442.0], [64.49, 23441.14], [67.28, 24304.53], [52.38, 19517.48], [52.18, 28973.81], [53.91, 13835.76], [60.16, 11705.04], [60.21, 22774.68], [50.25, 16081.29], [62.62, 19970.31], [60.51, 13734.48], [56.7, 12660.47], [54.94, 22043.19], [50.63, 17305.03], [38.31, 15111.66], [48.07, 11798.67], [65.48, 21972.95], [57.08, 15567.6], [64.27, 20141.75], [57.6, 23877.3], [59.71, 11338.36], [67.83, 20751.05], [52.93, 21238.84], [74.03, 23861.17], [70.14, 25613.75], [70.0, 21798.8], [63.36, 23453.77], [58.02, 21225.61], [33.58, 18128.67], [51.18, 23129.96], [42.91, 15188.74], [48.58, 11541.59], [67.98, 16944.57], [60.81, 22052.9], [59.76, 20160.52], [53.93, 19726.89], [61.71, 21777.3], [64.52, 12362.45], [52.39, 17052.54], [57.89, 20801.28], [70.92, 15899.94], [65.07, 20824.44], [53.49, 15792.86], [46.9, 19651.05], [48.4, 20765.94], [57.01, 20875.91], [56.61, 21302.29], [51.69, 22682.0], [50.32, 13266.54], [60.98, 15849.73], [50.36, 22661.45], [86.53, 14357.0], [53.63, 19494.47], [56.85, 21617.65], [52.96, 16569.66], [69.16, 12812.61], [41.76, 18141.37], [45.2, 17491.67], [60.39, 21820.66], [54.46, 19870.56], [51.11, 20789.93], [52.38, 18245.68], [57.81, 20909.11], [45.72, 15397.1], [70.01, 19223.21], [49.31, 21833.85], [66.81, 21898.7], [60.83, 18795.35], [62.03, 21253.13], [44.98, 22419.69], [64.82, 21233.99], [72.1, 23534.55], [58.94, 23016.64], [59.47, 22993.29], [55.06, 22036.86], [55.57, 14699.91], [74.98, 24822.38], [49.34, 13959.84], [57.19, 18357.44], [44.75, 17001.52], [63.31, 14601.8], [71.97, 21446.51], [49.32, 14460.83], [68.91, 24408.6], [67.13, 23362.67], [66.94, 14211.22], [44.69, 22484.19], [49.57, 17967.45], [53.63, 19905.07], [59.8, 12510.35], [58.74, 20759.91], [44.19, 21336.9], [48.86, 20822.1], [69.96, 14537.28], [71.61, 22909.47], [56.71, 14309.17], [56.02, 13184.98], [68.94, 15979.69], [57.08, 14032.65], [54.58, 20612.86], [62.82, 23242.75], [68.56, 22397.65], [54.36, 25668.19], [55.58, 13755.89], [56.41, 20014.23], [51.86, 20238.97], [50.36, 12718.86], [79.93, 24437.67], [55.31, 18556.99], [51.85, 11260.04], [42.87, 22925.73], [61.16, 15964.21], [84.95, 25540.05], [60.9, 20493.19], [58.9, 16731.83], [63.01, 21657.17], [56.51, 22769.08], [56.33, 24346.62], [66.94, 15980.73], [46.28, 12307.21], [46.29, 21259.76], [65.27, 24948.0], [57.36, 11356.36], [59.4, 13256.1], [57.77, 19705.96], [67.68, 20627.96], [62.17, 12145.98], [75.07, 25333.0], [64.61, 19618.92], [39.04, 13410.36], [59.05, 20862.75], [54.42, 22514.65], [64.55, 22319.11], [66.15, 23064.95], [64.58, 19095.07], [64.31, 20997.32], [52.1, 23961.39], [63.92, 23828.25], [49.46, 24413.67], [53.67, 19139.53], [38.2, 21902.16], [67.59, 19932.7], [61.86, 22625.59], [71.04, 13255.68], [48.19, 13371.24], [52.47, 17653.3], [71.23, 23875.83], [48.85, 14923.95], [49.89, 20382.54], [44.49, 20637.04], [38.96, 24401.69], [78.38, 22014.04], [61.45, 16982.03], [40.9, 19357.22], [62.5, 15349.49], [54.44, 13426.92], [49.06, 13283.26], [44.88, 10156.24], [41.45, 15864.0], [74.48, 23139.99], [71.42, 13958.97], [68.0, 22189.57], [46.99, 19969.83], [51.17, 22188.78], [57.33, 20680.65], [58.26, 21089.27], [54.75, 18502.37], [50.03, 18924.74], [48.7, 13314.17], [64.78, 22964.31], [50.51, 25561.17], [66.8, 14001.85], [72.7, 20654.34], [57.14, 21287.59], [59.23, 12662.77], [45.36, 11953.55], [51.94, 20455.45], [58.25, 12412.41], [44.48, 17520.24], [68.64, 14149.41], [51.12, 16221.52], [54.17, 23442.23], [60.38, 14872.02], [62.81, 24345.34], [64.74, 22490.87], [56.3, 21620.51], [53.61, 20006.27], [73.52, 22980.25], [58.23, 13242.47], [75.87, 25040.74], [57.87, 22523.0], [69.69, 14494.88], [69.4, 22542.46], [37.53, 24478.82], [54.18, 10413.83], [48.48, 10971.29], [47.19, 24251.82], [58.32, 23861.24], [83.96, 24066.08], [51.62, 21476.55], [61.54, 21840.04], [64.39, 24189.47], [60.11, 11834.49], [49.3, 16224.39], [40.45, 17943.96], [51.46, 19871.81], [55.09, 20283.76], [52.75, 12535.21], [53.11, 15644.38], [50.85, 18430.23], [69.98, 20119.73], [66.23, 22265.86], [54.21, 21231.8], [70.23, 24486.29], [56.17, 22891.13], [59.1, 23457.94], [52.69, 16326.79], [44.1, 19071.18], [42.15, 26861.22], [58.68, 11659.84], [64.19, 19572.96], [48.84, 24538.14], [49.21, 19987.68], [54.74, 20727.74], [67.48, 13593.63], [64.35, 22039.23], [55.63, 13188.88], [49.86, 15125.09], [55.8, 18074.04], [75.1, 24469.41], [53.69, 16183.33], [57.5, 21829.18], [54.37, 19235.14], [53.59, 20047.91], [56.79, 20636.84], [59.33, 22712.26], [51.28, 20034.99], [61.41, 20922.62], [51.64, 13147.62], [65.47, 22601.4], [56.56, 18934.93], [61.19, 31773.52], [47.26, 15656.5], [46.55, 15572.08], [53.38, 15276.15], [56.16, 11970.34], [61.23, 22749.51], [56.89, 25399.83], [62.68, 14530.63], [53.07, 11778.57], [65.07, 22953.52], [63.56, 24025.21], [60.97, 18093.71], [39.63, 20118.32], [44.41, 18157.98], [66.41, 23580.63], [54.37, 23394.53], [47.65, 21852.41], [73.17, 20183.62], [53.26, 20275.79], [63.21, 23238.91], [63.96, 21620.99], [60.16, 14614.64], [48.05, 26184.27], [56.9, 22648.76], [64.59, 22701.6], [37.51, 14454.26], [67.5, 24411.04], [44.59, 18681.97], [56.41, 15365.09], [69.62, 20754.35], [57.18, 17705.86], [80.57, 24453.54], [60.87, 10957.22], [59.37, 14684.32], [69.88, 14821.26], [69.52, 22457.47], [74.28, 22841.26], [48.29, 22273.68], [49.03, 16799.87], [62.66, 21357.39], [51.27, 24180.79], [58.18, 20063.4], [63.54, 23586.97], [62.95, 20118.45], [65.4, 15136.86], [55.38, 15866.17], [52.97, 18213.26], [46.57, 10931.39], [59.52, 22647.92], [49.33, 20427.23], [50.16, 21570.53], [64.57, 13016.41], [62.68, 19692.1], [79.62, 20392.23], [56.88, 24313.25], [51.81, 16435.86], [56.15, 22653.59], [54.38, 19502.66], [60.24, 12442.4], [62.37, 20172.01], [62.76, 14968.86], [51.33, 11731.25], [54.72, 19644.06], [55.13, 15978.83], [61.08, 21557.99], [74.2, 17505.48], [69.09, 21663.0], [54.44, 19831.05], [54.0, 25287.52], [72.64, 12616.57], [49.42, 22052.41], [67.09, 13891.16], [60.4, 21951.21], [55.56, 15538.0], [57.46, 22998.95], [45.5, 27456.78], [47.5, 20643.26], [60.68, 20770.83], [68.67, 22957.09], [74.32, 21028.69], [63.59, 23195.53], [59.05, 23367.17], [61.08, 10876.14], [62.28, 21760.21], [42.26, 22591.34]], [[6.57, 40058.76], [31.7, 34381.0], [24.19, 28033.0], [33.1, 42514.93], [-3.06, 37609.63], [37.73, 44533.22], [31.57, 41670.43], [32.9, 28870.65], [31.99, 44119.42], [16.91, 39753.54], [40.55, 27040.44], [47.38, 39678.73], [31.16, 28570.21], [49.71, 40152.14], [1.4, 26158.78], [10.26, 39761.33], [49.64, 37677.17], [41.14, 32040.68], [35.54, 32737.09], [5.43, 29351.18], [30.24, 40145.19], [18.03, 39907.62], [56.39, 38482.06], [5.0, 31010.35], [39.92, 29194.76], [19.76, 39859.1], [37.05, 27640.45], [31.49, 34214.57], [39.07, 25646.86], [39.92, 29691.06], [33.8, 28787.01], [37.44, 25628.07], [39.5, 42143.67], [48.99, 28834.86], [37.36, 38711.82], [42.19, 29913.45], [29.57, 41271.18], [40.77, 28266.28], [52.91, 31515.52], [-4.35, 34537.92], [-2.84, 28581.1], [55.22, 32970.38], [48.86, 46772.92], [30.35, 25530.06], [52.23, 44502.43], [22.26, 30459.7], [-2.49, 32128.55], [39.4, 35595.8], [55.73, 33648.72], [22.64, 29672.23], [39.47, 36054.76], [0.67, 28641.93], [19.9, 37491.03], [1.69, 37651.53], [2.47, 34902.8], [24.21, 31676.49], [-4.57, 32516.13], [45.64, 30823.76], [28.73, 43668.08], [14.04, 33588.64], [35.58, 27128.67], [0.07, 32736.76], [24.97, 43068.82], [38.79, 33194.68], [34.48, 28623.4], [34.35, 28650.96], [-4.58, 32537.81], [45.78, 27594.92], [-4.4, 33227.56], [34.46, 44538.28], [5.06, 29997.71], [30.64, 29585.22], [12.2, 30515.85], [-3.41, 34227.83], [6.87, 31876.18], [17.87, 40834.72], [5.27, 33808.27], [-2.61, 32784.87], [-4.81, 32888.45], [35.73, 28676.46], [8.72, 35341.04], [52.87, 42979.34], [-2.92, 27060.22], [50.95, 37549.57], [30.91, 26654.44], [24.93, 28268.96], [7.63, 38759.9], [34.86, 25355.39], [6.47, 37988.24], [11.81, 31957.88], [45.48, 42147.49], [57.24, 33730.65], [38.5, 22900.39], [39.76, 32749.53], [5.77, 38600.74], [46.54, 38139.82], [44.88, 35654.23], [44.1, 34419.09], [38.17, 45788.07], [2.85, 28700.7], [43.37, 26624.02], [51.46, 34966.94], [13.38, 39363.03], [33.59, 29045.9], [49.95, 39381.88], [13.57, 38176.04], [29.79, 42125.27], [43.44, 37246.08], [32.88, 27839.78], [31.93, 24971.34], [-0.24, 34460.93], [23.91, 41998.92], [20.56, 41633.87], [43.64, 26468.28], [39.32, 28525.83], [6.63, 32462.2], [10.39, 32964.08], [33.37, 32218.14], [3.69, 40073.41], [44.77, 36511.54], [35.29, 31341.49], [13.23, 28658.75], [37.18, 26762.93], [10.76, 36702.65], [2.14, 35235.07], [39.06, 27062.92], [9.92, 39394.79], [7.64, 37378.4], [9.52, 35151.82], [9.37, 33031.62], [40.9, 35475.12], [9.22, 26586.58], [27.73, 28548.33], [32.97, 31309.1], [34.26, 32001.11], [52.18, 32862.31], [41.32, 27665.99], [36.96, 27958.1], [44.73, 26507.91], [38.58, 29543.16], [57.77, 34616.42], [-0.07, 30593.37], [15.91, 41101.19], [2.54, 29577.93], [35.31, 33127.03], [10.66, 40402.23], [47.42, 43342.38], [35.09, 26783.82], [46.48, 39228.98], [40.27, 43074.25], [36.65, 27247.24], [-1.2, 30750.36], [34.71, 35241.7], [20.16, 41353.8], [31.23, 33034.59], [12.78, 34019.78], [43.85, 37284.29], [1.04, 33078.34], [10.18, 40423.05], [48.94, 35803.69], [28.21, 28315.84], [39.91, 34775.33], [17.95, 28487.11], [4.8, 28724.93], [2.59, 37176.49], [52.91, 36612.18], [46.56, 35979.29], [5.0, 33376.18], [36.57, 26479.71], [42.34, 35094.95], [47.94, 47321.5], [9.86, 36474.18], [12.81, 36081.61], [13.02, 33075.3], [30.47, 30173.42], [-4.17, 35620.46], [46.92, 33024.85], [51.07, 42995.86], [9.01, 28367.46], [50.51, 31848.97], [21.01, 30716.94], [37.49, 34075.73], [41.35, 27565.99], [2.33, 34284.5], [29.06, 31946.49], [39.04, 43026.27], [42.49, 38656.43], [9.36, 29834.72], [46.23, 37866.17], [46.37, 42966.47], [15.1, 35834.34], [14.83, 40061.79], [8.16, 31682.5], [29.99, 45453.56], [50.84, 38532.58], [29.16, 28458.04], [41.63, 43036.97], [50.96, 33117.83], [6.8, 39802.83], [38.99, 35447.36], [34.44, 25431.72], [51.35, 31375.35], [43.97, 25512.85], [33.22, 24841.76], [37.08, 29835.27], [14.11, 41559.34], [42.11, 29208.29], [34.95, 28889.1], [40.39, 43775.08], [28.23, 34939.26], [14.41, 40338.29], [45.95, 32113.0], [9.35, 31415.8], [33.61, 43655.41], [34.94, 27813.12], [50.49, 47080.11], [43.26, 28270.29], [24.06, 44539.44], [40.74, 41911.26], [48.04, 33946.74], [52.02, 43845.32], [37.4, 27783.51], [7.6, 38484.92], [37.88, 29619.68], [35.38, 30568.55], [49.43, 33754.76], [39.93, 28160.86], [41.24, 44975.54], [5.1, 33927.48], [39.79, 42405.51], [26.56, 33670.25], [33.25, 22949.44], [13.13, 40702.1], [4.87, 34803.81], [41.75, 34430.86], [0.85, 31933.47], [31.09, 32779.51], [3.38, 37084.07], [25.0, 41645.16], [22.27, 40949.65], [30.82, 27558.71], [52.18, 39103.13], [18.25, 30193.68], [52.26, 35993.08], [31.17, 32898.38], [18.15, 40445.69], [37.8, 36055.16], [18.73, 31234.7], [49.23, 27830.71], [34.93, 27029.79], [47.95, 33333.66], [46.7, 26533.44], [-0.84, 30863.52], [42.22, 26014.08], [10.98, 39370.72], [21.89, 39308.21], [-4.98, 31500.26], [9.18, 32721.15], [36.53, 23306.5], [47.62, 36749.49], [4.51, 28950.19], [34.26, 28723.4], [0.37, 35308.89], [6.64, 28434.77], [39.46, 44486.5], [48.06, 27932.3], [57.32, 33935.14], [30.16, 44583.04], [38.38, 32191.63], [10.01, 38724.81], [30.8, 36700.27], [0.58, 37990.37], [30.27, 32145.01], [19.46, 34631.74], [25.02, 43439.88], [17.15, 29623.56], [37.91, 31096.41], [49.49, 27947.15], [29.17, 31389.59], [5.93, 38820.87], [11.24, 32669.5], [21.24, 38837.34], [4.75, 36159.01], [17.38, 30015.02], [43.95, 37241.91], [13.04, 29782.95], [48.62, 28019.85], [45.6, 33303.11], [32.78, 44119.13], [10.13, 41109.39], [2.85, 29843.68], [12.87, 27496.57], [40.11, 34359.69], [3.57, 32240.28], [-4.7, 33602.18], [0.57, 33166.72], [29.35, 23894.03], [27.32, 34029.71], [16.2, 40924.57], [4.54, 34939.46], [18.24, 34067.97], [14.32, 40312.59], [32.41, 44259.5], [41.0, 42483.12], [4.82, 37611.93], [28.95, 25426.37], [32.59, 33873.14], [51.07, 45514.74], [-3.17, 32945.4], [4.55, 36961.23], [16.68, 39765.43], [33.84, 28490.03], [44.3, 34611.45], [-4.01, 32301.97], [21.4, 33256.48], [44.38, 26517.42], [5.37, 25966.45], [35.18, 30643.72], [17.13, 30408.41], [7.88, 32249.04], [-4.37, 33963.9], [47.58, 37781.11], [30.94, 23064.27], [22.12, 40608.61], [39.54, 39455.1], [40.34, 23625.33], [18.15, 39134.47], [33.66, 42022.74], [34.1, 33165.16], [39.36, 31388.1], [22.69, 27955.55], [46.78, 45714.54], [-2.17, 35297.02], [50.85, 46275.18], [7.07, 34729.97], [44.98, 28350.17], [51.97, 44959.77], [37.3, 35941.14], [33.49, 29570.07], [42.59, 31080.67], [7.0, 37745.49], [52.08, 38586.98], [39.72, 28162.29], [33.29, 42361.87], [26.27, 30422.91], [23.06, 21177.06], [8.27, 25172.67], [-0.74, 36321.12], [15.37, 39165.15], [42.38, 27788.18], [43.06, 26114.39], [4.91, 34266.85], [4.95, 33315.51], [29.71, 27962.34], [23.04, 39886.56], [20.88, 31423.45], [13.96, 31355.19], [47.65, 44005.64], [17.76, 39893.28], [40.39, 29513.58], [39.69, 36217.93], [55.6, 39287.38], [27.44, 30593.82], [8.19, 31043.25], [36.44, 30941.75], [3.75, 37992.67], [57.01, 33124.8], [38.28, 31979.62], [9.06, 33244.47], [4.08, 39730.27], [14.81, 27452.74], [13.37, 37340.49], [44.6, 35643.12], [57.04, 32638.08], [40.73, 28019.9], [43.54, 27719.08], [35.64, 32039.39], [19.36, 30444.74], [12.34, 31663.44], [4.89, 31258.8], [43.6, 36330.78], [-0.42, 35421.92], [51.58, 33689.48], [13.73, 28913.35], [57.74, 33722.59], [46.86, 43230.84], [36.43, 25522.18], [38.58, 31267.31], [30.78, 30647.73], [40.6, 44511.9], [3.47, 26494.1], [39.02, 28778.58], [4.68, 28631.36], [18.67, 30546.37], [32.18, 42696.61], [41.46, 28273.91], [22.87, 31466.24], [4.19, 37173.63], [43.21, 34363.47], [-4.45, 34661.12], [6.25, 33770.44], [13.32, 35395.94], [22.87, 27005.49], [33.75, 34634.95], [57.04, 34280.92], [50.26, 28759.0], [31.16, 42838.8], [5.42, 37318.61], [40.7, 24078.35], [34.07, 27600.47], [19.97, 33755.58], [30.02, 44668.07], [25.43, 29071.33], [37.5, 28153.11], [35.08, 34919.33], [4.53, 27574.95], [21.7, 38876.04], [24.67, 42250.3], [32.98, 42072.84], [18.41, 40648.22], [47.0, 37969.59], [22.11, 41227.86], [5.47, 32372.34], [36.15, 22264.5], [55.48, 39148.06], [46.51, 35950.86], [49.03, 31515.2], [39.46, 43197.31], [26.68, 34550.35], [14.25, 32999.34], [41.16, 36940.68], [38.61, 33966.83], [4.42, 38590.32], [37.9, 33143.94], [15.42, 29524.95], [28.08, 42476.12], [32.43, 32483.97], [32.78, 32335.1], [39.86, 36976.64], [54.98, 39368.4], [51.53, 31412.94], [42.47, 38190.19], [18.78, 39811.74], [35.99, 34362.32], [8.11, 34573.81], [38.97, 27705.16], [33.85, 31658.89], [54.66, 31936.31], [49.35, 43565.16], [15.6, 31826.29], [38.08, 31478.35], [33.93, 30823.23], [21.75, 39867.07], [55.17, 34277.5], [47.64, 38488.65], [55.64, 33104.95], [43.81, 30641.97], [58.54, 32651.69], [8.16, 34212.81], [39.72, 33488.22], [26.53, 42258.15], [41.94, 36995.5], [49.17, 31190.15], [13.21, 39078.31], [38.11, 29377.59], [41.53, 32063.16], [8.47, 30311.02], [39.63, 28540.3], [48.18, 31410.91], [39.64, 36930.56], [55.04, 40080.38], [50.32, 31184.68], [41.58, 27664.31], [7.51, 34596.65], [20.39, 40644.57], [47.0, 31791.92], [30.55, 27984.75], [38.3, 27834.31], [35.01, 29227.33], [44.8, 28423.18], [11.98, 39167.29], [10.38, 34691.21], [38.37, 29026.16], [54.1, 32462.21], [22.11, 36236.62], [30.59, 29732.52], [30.62, 41795.73], [32.0, 42345.32], [30.44, 31820.68], [41.69, 34593.51], [33.03, 29620.23], [47.56, 43780.57], [35.48, 25989.59], [45.25, 35898.15], [27.55, 42383.71], [-2.62, 38191.77], [22.73, 43315.16], [54.45, 36807.02], [52.12, 32448.63], [34.67, 33660.76], [55.87, 33870.39], [9.26, 33624.07], [44.79, 31340.42], [46.53, 29614.52], [24.95, 44252.25], [25.48, 30752.14], [52.61, 32503.73], [12.89, 28421.29], [37.13, 27707.2], [48.44, 31924.62], [24.36, 31405.16], [32.41, 28933.44], [42.71, 45970.5], [4.54, 29363.24], [-4.78, 34097.64], [4.79, 34619.29], [29.03, 27949.41], [25.89, 42746.25], [-1.12, 31606.69], [45.3, 34545.41], [26.21, 28559.71], [13.27, 26796.91], [26.2, 44310.31], [19.78, 30885.08], [27.09, 42096.11], [50.24, 34002.76], [55.46, 40257.78], [27.3, 26261.39], [41.46, 43738.68], [42.86, 29827.7], [35.8, 36485.64], [35.02, 27368.49], [4.91, 34956.82], [40.93, 34593.57], [4.92, 34610.93], [41.54, 25215.89], [39.52, 26666.89], [2.78, 35151.41], [47.35, 32142.13], [10.48, 31172.41], [17.09, 36725.41], [35.62, 27113.57], [36.48, 26168.6], [27.91, 30157.27], [-1.17, 38399.16], [36.98, 43321.3], [-2.11, 33483.49], [26.57, 41285.11], [46.5, 44081.4], [15.55, 39252.7], [26.37, 40314.07], [48.28, 43919.24], [43.43, 29952.23], [39.22, 27604.48], [17.34, 34127.79], [18.27, 29881.13], [22.56, 41739.71], [32.38, 43907.52], [18.7, 42453.52], [3.14, 28216.83], [51.59, 37551.42], [17.97, 36246.6], [47.48, 31791.68], [12.7, 26458.78], [38.14, 27414.55], [0.01, 36039.23], [54.4, 38693.51], [43.27, 31930.13], [-1.61, 30533.31], [-0.36, 35940.53], [49.94, 46525.63], [7.65, 37167.06], [32.91, 27319.98], [38.87, 35315.91], [59.79, 33989.77], [12.42, 32955.49], [44.13, 30054.45], [47.08, 33403.6], [42.2, 37266.64], [56.02, 33530.25], [36.15, 28623.18], [33.13, 26880.39], [47.26, 29833.7], [25.29, 44290.5], [5.24, 37760.61], [16.41, 40692.24], [43.89, 26856.15], [6.4, 35076.5], [56.07, 37301.57], [30.14, 31681.47], [12.36, 31486.65], [36.69, 30133.91], [48.14, 38048.32], [-3.26, 36101.88], [53.4, 39993.27], [39.25, 24366.72], [30.29, 33593.53], [51.75, 31862.83], [46.24, 31795.77], [10.68, 35744.0], [50.63, 48265.78], [42.19, 28713.66], [-1.89, 28811.48], [21.32, 29772.38], [19.41, 29739.4], [11.37, 36424.68], [35.6, 26654.62], [30.38, 43607.63], [9.97, 41146.55], [52.52, 31253.0], [45.11, 28202.23], [-3.01, 34314.77], [10.77, 35236.79], [24.7, 41822.12], [37.94, 26973.09], [32.51, 33610.66], [4.69, 38040.31], [7.31, 27279.91], [-0.41, 32122.34], [37.98, 30753.58], [26.14, 29684.78], [6.09, 37148.86], [-4.8, 32876.25], [1.1, 38749.04], [48.89, 37310.14], [8.33, 40526.2], [45.45, 31569.71], [41.22, 27619.27], [6.37, 38958.16], [13.69, 30494.3], [45.25, 27680.83], [21.2, 32779.99], [44.28, 31689.73], [25.13, 40302.86], [2.01, 36826.52], [45.12, 27990.39], [44.98, 36911.4], [21.4, 29985.94], [28.24, 43079.77], [5.2, 33799.18], [21.01, 29098.2], [40.85, 26687.65], [35.31, 29423.64], [28.05, 30683.8], [38.14, 33431.67], [1.16, 36743.11], [39.43, 26994.95], [54.92, 32958.12], [29.74, 35489.43], [33.53, 29890.82], [38.22, 43135.54], [1.39, 36403.08], [4.34, 37306.87], [44.66, 28563.09], [46.62, 28955.34], [41.33, 31756.36], [2.49, 26205.23], [47.68, 42520.09], [40.09, 29410.17], [30.51, 33382.88], [37.88, 36475.44], [40.49, 27174.07], [6.44, 35274.02], [38.48, 34199.94], [27.32, 26517.38], [2.87, 38634.26], [47.36, 46774.2], [52.09, 33397.85], [33.2, 35529.78], [13.56, 29974.14], [13.21, 27669.72], [45.05, 36045.76], [45.34, 32888.73], [43.83, 27909.22], [38.11, 27287.89], [45.8, 26099.45], [-3.59, 32227.03], [12.14, 38433.27], [4.22, 37515.85], [8.84, 38869.69], [39.52, 43372.26], [38.79, 34011.78], [12.32, 38236.96], [51.8, 39399.0], [20.18, 41890.56], [24.67, 26718.79], [28.34, 34342.62], [39.78, 27181.2], [18.17, 37748.05], [17.1, 41306.11], [28.73, 33673.42], [5.13, 32207.65], [52.81, 36121.65], [5.48, 37045.57], [-2.01, 29895.71], [26.52, 30368.71], [47.22, 41438.91], [10.7, 37296.07], [38.63, 34396.82], [34.16, 27250.15], [30.78, 41879.6], [30.44, 34046.84], [14.53, 39779.55], [10.19, 25888.03], [38.17, 41077.17], [-4.48, 34119.85], [33.86, 42027.64], [51.09, 32047.85], [4.49, 36401.81], [26.28, 27655.69], [23.08, 40456.26], [51.29, 35544.24], [29.85, 30600.43], [40.62, 44594.51], [58.5, 32194.7], [42.56, 44047.39], [24.75, 30996.42], [46.72, 44732.96], [51.74, 33417.76], [47.58, 34478.01], [9.68, 35257.85], [31.28, 34038.83], [12.86, 35468.77], [28.35, 42913.4], [39.86, 25136.3], [48.1, 37753.17], [11.97, 38303.11], [31.24, 28512.31], [5.88, 29235.06], [17.43, 41222.97], [32.51, 28810.06], [-4.65, 32112.84], [53.35, 38350.94], [38.38, 43090.47], [6.48, 35529.73], [40.17, 25404.07], [30.47, 27557.55], [37.7, 31575.33], [11.98, 30615.85], [12.83, 40539.88], [13.06, 37746.66], [47.21, 32329.74], [9.32, 26579.86], [-4.38, 34046.1], [30.15, 30209.87], [5.11, 34473.32], [24.73, 30774.76], [35.16, 34607.18], [48.0, 42032.18], [2.33, 29747.66], [-0.17, 29149.02], [5.38, 34991.54], [32.86, 32699.35], [35.7, 27255.31], [59.31, 35363.42], [32.59, 32413.46], [2.34, 29983.53], [6.65, 31005.22], [39.14, 23166.51], [28.71, 29375.36], [33.95, 34978.1], [28.1, 31966.93], [28.2, 28326.42], [22.05, 43275.01], [38.93, 43020.59], [4.56, 29578.34], [44.08, 43766.33], [42.27, 26517.66], [44.52, 41929.48], [44.4, 27772.99], [36.03, 36342.81], [43.24, 31925.31], [35.48, 31122.94], [40.92, 26852.22], [31.29, 28606.85], [4.64, 36247.62], [-4.5, 34310.48], [37.24, 27390.02], [38.34, 46257.73], [55.01, 31971.13], [50.27, 37464.39], [23.48, 44404.3], [48.82, 28463.32], [37.59, 45088.68], [8.78, 28368.26], [6.45, 28401.3], [13.55, 37942.77], [53.22, 31695.9], [44.31, 27892.85], [37.08, 24480.42], [39.56, 30075.93], [55.71, 34674.95], [42.29, 29000.08], [16.77, 38678.86], [42.96, 45692.95], [27.54, 27460.81], [41.23, 35428.38], [48.19, 28668.38], [21.12, 42098.62], [0.85, 27902.29]], [[37.5, 16479.2], [46.94, 25311.08], [67.77, 13733.15], [54.16, 16564.22], [45.05, 17757.0], [57.53, 24369.17], [33.69, 16111.33], [53.53, 16161.42], [60.83, 23248.99], [46.07, 13416.12], [71.16, 22395.38], [65.76, 20185.41], [71.77, 21064.17], [40.34, 16314.53], [51.18, 15919.25], [53.77, 19802.54], [45.57, 24224.12], [38.17, 17730.6], [43.51, 13374.68], [47.62, 17930.98], [64.47, 19710.61], [43.39, 22329.72], [30.1, 20254.47], [48.71, 17875.46], [42.93, 18397.84], [42.82, 19504.31], [46.55, 20835.36], [40.49, 20543.91], [62.5, 20595.97], [39.94, 20028.15], [46.7, 24320.35], [41.89, 23872.58], [63.46, 24226.12], [33.72, 16120.51], [47.24, 21261.8], [42.35, 22338.26], [50.49, 21839.86], [51.25, 16704.11], [53.97, 19298.15], [74.05, 15745.35], [32.57, 18950.13], [35.25, 15941.93], [50.12, 24732.66], [38.77, 25749.77], [53.22, 22628.35], [47.2, 18727.2], [41.55, 18480.79], [44.15, 24696.85], [58.95, 20961.6], [56.75, 23473.09], [70.71, 18012.69], [41.08, 23232.73], [64.1, 21551.77], [42.51, 21164.23], [30.87, 19827.64], [62.37, 18081.0], [33.59, 21873.41], [62.44, 19976.61], [59.62, 20358.04], [52.02, 19992.94], [57.04, 20098.25], [66.71, 18355.26], [52.57, 17292.88], [54.87, 19553.64], [37.77, 23766.96], [44.68, 17900.16], [43.14, 23180.11], [59.58, 16977.23], [58.79, 19512.4], [51.13, 12213.12], [54.87, 19716.07], [52.7, 24041.49], [48.64, 19490.93], [46.12, 19468.04], [71.34, 20494.64], [62.38, 19465.13], [58.04, 18624.11], [48.81, 18025.87], [50.33, 19840.69], [48.08, 25854.21], [45.53, 17024.73], [45.34, 18389.98], [56.68, 23558.33], [71.3, 21463.66], [46.06, 21529.55], [51.37, 23495.82], [52.3, 23921.34], [54.2, 23050.43], [53.38, 19112.82], [43.45, 19055.14], [81.76, 20143.87], [51.73, 23221.06], [36.32, 24004.74], [46.0, 19397.53], [30.22, 25049.4], [62.23, 20890.52], [50.06, 11753.27], [41.82, 23325.07], [55.36, 22248.86], [54.27, 23363.51], [67.5, 21253.8], [57.33, 18286.34], [45.78, 14831.24], [45.27, 22939.14], [45.69, 22782.95], [53.47, 24376.56], [52.14, 18239.63], [46.39, 17782.05], [52.66, 19868.38], [34.34, 22971.18], [62.33, 17406.91], [66.94, 22672.19], [65.93, 18067.66], [75.24, 20145.83], [32.06, 15076.61], [48.82, 20018.05], [48.11, 15106.07], [66.35, 21608.26], [52.79, 23598.03], [49.65, 15404.31], [50.41, 23786.22], [59.46, 20028.5], [45.35, 22681.89], [63.59, 20152.72], [55.76, 22255.65], [38.44, 24860.73], [32.35, 25335.85], [28.34, 25645.04], [25.5, 24970.1], [41.59, 18548.53], [42.34, 16587.39], [36.92, 22311.67], [53.37, 21799.07], [46.7, 24940.89], [69.21, 18813.63], [62.11, 19302.44], [61.71, 22066.71], [41.49, 20190.37], [68.74, 15878.86], [52.3, 23332.71], [45.41, 18195.05], [41.07, 12052.15], [46.99, 14487.18], [45.31, 21883.44], [51.25, 17610.22], [32.13, 17171.73], [29.4, 17968.25], [53.44, 19755.98], [71.23, 18800.98], [46.93, 21192.47], [34.89, 23764.56], [66.38, 20956.56], [39.53, 19662.61], [64.5, 22083.94], [76.17, 23853.13], [48.36, 17219.99], [56.82, 19157.67], [39.6, 15367.57], [51.16, 26175.69], [26.77, 25178.33], [43.42, 20206.78], [42.59, 20468.53], [56.82, 23930.16], [37.78, 13687.6], [63.5, 20996.33], [60.35, 18969.52], [43.7, 24245.15], [56.66, 21071.01], [41.69, 18040.01], [40.92, 17860.63], [56.78, 22304.58], [45.92, 15541.83], [43.16, 23091.08], [39.86, 18121.56], [52.16, 22053.61], [71.65, 17266.7], [66.39, 25793.89], [48.99, 22465.63], [48.86, 19205.39], [40.5, 22355.84], [60.68, 20248.25], [56.59, 21570.8], [41.44, 23821.06], [45.17, 16190.1], [42.07, 25317.65], [54.97, 23089.21], [29.45, 12811.37], [42.52, 22844.23], [47.45, 23394.18], [44.23, 19004.95], [47.97, 22979.65], [84.54, 16670.46], [45.33, 20053.19], [44.84, 17423.73], [50.13, 21701.72], [65.53, 22070.51], [37.48, 19133.53], [60.49, 19840.63], [45.52, 15910.38], [42.09, 17297.44], [72.08, 21845.45], [46.52, 18319.04], [59.9, 22010.98], [54.92, 21003.14], [50.54, 22964.19], [83.2, 18718.75], [51.09, 21628.25], [54.05, 23415.59], [33.45, 25151.46], [58.96, 14463.45], [60.92, 18512.48], [43.58, 19108.87], [45.01, 20906.21], [61.85, 18361.12], [72.74, 23888.29], [35.77, 17191.91], [43.93, 19129.79], [59.54, 23364.67], [37.8, 17820.07], [65.58, 21371.6], [56.29, 18198.03], [52.1, 25296.69], [39.86, 25919.67], [43.07, 17069.47], [44.09, 17079.53], [45.69, 22155.5], [34.61, 16555.53], [54.03, 18360.47], [64.53, 20015.06], [44.01, 17458.55], [39.39, 17141.18], [25.74, 20407.52], [50.03, 20244.91], [56.08, 17969.76], [46.36, 21568.81], [59.98, 24331.06], [37.89, 23315.7], [54.76, 22472.93], [52.21, 21492.42], [65.7, 19373.72], [27.28, 23070.35], [44.81, 24275.62], [36.93, 22885.86], [45.76, 17433.46], [71.19, 16556.85], [26.34, 17995.25], [57.6, 18617.02], [39.79, 21452.2], [56.64, 19783.25], [49.98, 18504.08], [40.22, 25296.4], [51.58, 23913.16], [41.29, 24274.54], [50.04, 19001.27], [47.21, 23923.36], [49.65, 21518.61], [66.78, 21978.72], [51.42, 24942.38], [67.28, 25353.86], [47.54, 23579.36], [36.87, 21204.14], [54.28, 22051.8], [53.24, 21140.92], [38.96, 20480.7], [60.04, 24201.1], [49.71, 20766.22], [47.89, 22772.14], [71.55, 18660.06], [60.7, 22482.3], [45.67, 21876.07], [80.24, 18665.16], [36.66, 23769.11], [52.61, 16832.85], [50.61, 22421.21], [14.6, 26165.13], [48.05, 18630.71], [71.44, 16491.62], [38.78, 23273.3], [58.6, 22731.14], [41.72, 17066.26], [45.77, 24873.89], [57.1, 20885.62], [43.1, 13573.94], [56.54, 22425.66], [41.3, 23277.93], [55.87, 23662.39], [54.83, 24245.5], [54.28, 22394.35], [87.59, 21768.02], [46.77, 17879.75], [39.95, 18896.6], [62.61, 21203.75], [51.2, 23389.32], [43.12, 13303.25], [40.37, 23266.99], [61.19, 21974.15], [48.23, 24221.72], [59.62, 22196.15], [54.5, 18479.33], [63.3, 16671.16], [79.33, 18590.8], [64.82, 23321.73], [47.88, 24233.13], [67.25, 22671.18], [47.41, 24163.56], [50.33, 22250.61], [46.77, 22569.06], [58.96, 20981.95], [72.72, 19796.37], [58.69, 22316.66], [67.11, 21196.61], [53.28, 16501.72], [48.1, 18789.6], [53.15, 20646.48], [62.99, 21294.66], [54.06, 23845.06], [59.11, 21797.86], [60.63, 24163.98], [36.95, 24420.07], [39.61, 23145.49], [51.98, 22213.98], [47.79, 21339.79], [49.96, 18911.28], [45.44, 17821.56], [45.9, 19053.13], [47.96, 13958.13], [50.8, 17554.54], [43.29, 22073.63], [72.51, 19384.17], [34.71, 18587.26], [52.94, 21264.2], [66.06, 16395.17], [75.5, 18003.18], [28.74, 17731.12], [48.25, 23714.43], [38.87, 18753.85], [43.55, 23472.88], [52.55, 19409.08], [33.64, 25442.35], [68.72, 19533.29], [65.1, 23141.35], [49.35, 16195.59], [37.03, 20110.22], [42.77, 22347.46], [71.41, 19612.01], [39.28, 21286.73], [38.9, 25674.82], [78.6, 21871.65], [47.88, 23385.59], [36.75, 20692.12], [62.83, 21206.31], [46.53, 15812.04], [63.55, 20731.79], [34.85, 26761.47], [33.44, 16318.48], [60.39, 24223.12], [70.96, 17898.0], [44.49, 17651.38], [37.61, 20203.02], [49.3, 23666.53], [42.66, 23978.57], [42.3, 19874.61], [66.72, 16748.01], [62.4, 21098.88], [42.1, 16229.69], [58.68, 20648.16], [54.68, 19854.28], [61.9, 21885.58], [67.07, 21947.58], [37.67, 14052.53], [35.96, 24862.1], [48.2, 24146.66], [59.52, 22163.0], [49.71, 21125.55], [62.5, 23947.6], [34.56, 17084.14], [65.35, 23036.34], [42.02, 19915.29], [66.93, 21577.54], [34.98, 21910.96], [40.41, 22972.35], [58.54, 23511.07], [38.88, 24261.75], [54.0, 18779.1], [51.0, 20681.48], [21.86, 24331.93], [74.19, 17724.75], [53.03, 21962.69], [54.74, 15306.48], [50.56, 18290.16], [39.51, 19872.35], [41.89, 19778.62], [66.12, 16661.51], [51.0, 23231.85], [72.17, 21810.65], [61.54, 21324.5], [50.64, 22346.47], [46.3, 22870.79], [50.05, 23855.25], [61.34, 22879.46], [48.69, 19435.12], [48.75, 23753.9], [49.8, 23260.53], [46.78, 23470.05], [48.56, 13242.64], [62.89, 20470.12], [40.06, 20282.79], [64.31, 19953.86], [48.48, 23387.78], [72.3, 20602.57], [50.29, 17621.28], [36.74, 19170.64], [80.15, 19663.53], [35.93, 26789.55], [62.17, 20170.85], [66.36, 19844.11], [51.72, 22843.1], [43.49, 14059.33], [42.59, 13989.74], [42.83, 20599.07], [71.07, 17705.01], [58.53, 24919.92], [34.92, 23434.73], [73.87, 16076.06], [56.23, 21641.3], [37.76, 24105.57], [52.95, 20243.37], [52.9, 23434.09], [49.23, 21708.15], [51.17, 21790.58], [46.59, 24048.54], [39.71, 24730.17], [45.95, 19663.15], [53.34, 21884.25], [46.82, 21592.39], [55.13, 18215.6], [44.85, 17267.06], [57.97, 20742.17], [43.2, 21444.85], [50.88, 18654.62], [59.04, 19769.61], [44.39, 23417.17], [78.73, 17205.21], [46.25, 18396.46], [52.96, 24968.55], [48.03, 22644.98], [57.44, 13281.74], [59.84, 24853.23], [59.16, 18625.1], [35.04, 17803.08], [63.08, 19053.9], [55.43, 23394.79], [49.12, 18399.36], [70.36, 21966.61], [43.74, 20408.27], [71.3, 19834.02], [48.72, 14395.67], [54.62, 21673.82], [47.18, 20566.74], [42.65, 17859.12], [53.12, 17160.97], [51.52, 19775.31], [55.19, 20209.13], [57.61, 22821.83], [27.25, 18960.89], [64.1, 20279.76], [39.52, 12298.0], [58.8, 21025.34], [47.0, 20236.27], [30.63, 18899.58], [63.33, 23023.65], [41.31, 22626.03], [56.89, 20410.39], [53.91, 22109.55], [80.29, 16652.65], [45.07, 17049.97], [51.3, 21311.5], [50.02, 21540.84], [50.13, 22844.42], [41.12, 24070.34], [61.94, 15651.55], [41.0, 19792.34], [54.95, 23649.96], [50.59, 20024.23], [44.12, 23832.18], [52.88, 17922.09], [51.99, 22239.37], [46.93, 12282.14], [48.12, 26068.5], [45.4, 23266.99], [39.11, 15170.04], [58.8, 23373.43], [42.74, 22775.76], [43.91, 21694.39], [42.87, 23971.21], [49.14, 21335.67], [36.14, 25053.27], [81.15, 18697.28], [45.79, 17684.15], [60.47, 18124.93], [44.72, 15416.47], [77.15, 20040.07], [53.54, 14998.94], [50.05, 14667.47], [40.71, 21783.55], [36.7, 23474.87], [54.57, 20504.87], [46.0, 24096.45], [41.1, 21032.27], [54.61, 21335.07], [42.24, 24357.92], [42.08, 14603.41], [71.75, 17571.38], [32.82, 20526.82], [49.87, 21291.42], [51.42, 17838.48], [58.98, 15248.13], [40.78, 24890.64], [42.94, 23265.76], [30.26, 22283.59], [51.95, 19256.52], [44.99, 16693.53], [55.36, 24737.71], [47.58, 15304.67], [53.64, 18383.22], [54.1, 20826.97], [47.15, 20165.82], [49.3, 18021.49], [61.26, 25322.58], [43.09, 17911.56], [49.94, 19882.36], [26.09, 24397.23], [41.11, 18095.97], [60.2, 18093.59], [42.6, 21006.42], [44.95, 20356.53], [42.49, 20180.15], [61.43, 21201.03], [42.16, 19438.55], [62.85, 23634.47], [43.29, 17005.75], [55.31, 20533.6], [44.5, 12882.87], [54.16, 20234.89], [54.42, 17438.87], [53.91, 22363.28], [74.08, 18230.07], [57.38, 17811.6], [49.85, 22316.33], [39.39, 14613.17], [46.22, 19304.23], [49.66, 13958.91], [60.64, 23537.45], [37.92, 23473.87], [43.12, 18966.22], [46.91, 13990.35], [56.67, 20785.06], [55.62, 23097.74], [48.94, 19407.89], [70.54, 19135.57], [63.51, 18564.89], [46.95, 16968.0], [42.96, 20610.82], [48.28, 15437.72], [55.93, 20173.23], [50.0, 18171.56], [62.42, 19693.37], [41.99, 25575.94], [54.69, 22947.98], [65.67, 16942.35], [73.09, 15808.16], [46.99, 16386.33], [62.17, 23014.24], [34.22, 21614.34], [47.9, 20893.73], [48.05, 21632.67], [41.65, 17908.42], [57.54, 17950.76], [57.78, 16996.15], [42.62, 20597.87], [53.05, 15349.21], [54.5, 23360.02], [52.82, 25164.85], [44.3, 24679.69], [56.23, 16771.38], [48.43, 24733.68], [59.37, 17205.71], [57.01, 22081.06], [56.16, 20165.52], [39.02, 16684.7], [42.37, 19904.22], [55.89, 25101.14], [40.04, 17549.59], [38.94, 15137.32], [38.07, 24838.84], [62.62, 16686.6], [33.47, 24198.89], [60.23, 24093.73], [15.62, 25244.03], [47.34, 19925.3], [46.52, 12946.9], [69.89, 17258.61], [53.43, 16965.95], [38.33, 17600.11], [64.77, 19495.28], [48.18, 16738.47], [50.13, 18411.3], [64.1, 21608.11], [41.12, 15735.64], [60.49, 24306.6], [34.82, 14437.75], [34.84, 17673.31], [25.74, 24702.65], [50.87, 21107.85], [58.0, 21366.16], [52.76, 22038.18], [43.22, 17469.56], [46.25, 24292.85], [62.04, 20577.12], [65.32, 19666.99], [34.12, 22796.31], [41.52, 17561.02], [49.35, 21962.07], [44.64, 22808.96], [43.24, 17548.68], [63.0, 22453.16], [25.72, 26578.41], [54.0, 22022.66], [78.87, 17745.0], [24.69, 22801.4], [64.4, 23208.73], [49.02, 19423.49], [53.9, 20404.22], [35.58, 18783.48], [51.36, 20233.99], [45.48, 20356.97], [45.69, 24294.72], [46.87, 24097.36], [31.67, 20974.58], [50.51, 17283.11], [47.48, 13646.86], [62.48, 20742.21], [43.9, 24341.99], [48.83, 15540.57], [43.27, 15469.61], [61.03, 22764.56], [51.24, 23853.42], [60.53, 24021.04], [62.03, 22719.49], [25.51, 25443.46], [43.48, 23074.91], [43.32, 23139.32], [36.72, 14892.66], [71.73, 22295.95], [63.64, 22451.23], [38.6, 23489.62], [55.07, 18570.51], [60.06, 21785.68], [41.36, 25841.44], [39.31, 23077.1], [48.69, 23147.75], [46.57, 15283.15], [32.26, 25807.51], [37.25, 18610.24], [62.54, 21394.14], [59.07, 18849.71], [63.07, 18996.54], [49.0, 19200.22], [62.37, 24532.71], [33.99, 20184.71], [34.16, 26357.0], [60.74, 19910.47], [42.55, 12901.02], [57.83, 17011.61], [37.71, 14561.93], [44.76, 12780.35], [44.39, 23114.97], [43.98, 22262.57], [41.26, 18011.79], [46.67, 18699.47], [46.67, 13729.67], [42.16, 22490.45], [42.03, 19397.68], [74.15, 19317.74], [53.06, 16561.51], [45.7, 20014.16], [58.61, 24881.58], [53.6, 22183.55], [47.8, 15456.4], [54.25, 19641.11], [44.39, 21723.83], [69.94, 20097.9], [47.63, 20299.3], [56.84, 22142.76], [14.98, 26411.67], [55.09, 21973.57], [48.91, 15385.55], [45.05, 18970.33], [60.33, 22954.92], [41.56, 22932.81], [46.04, 16477.57], [74.22, 17613.77], [47.76, 20648.29], [51.52, 16991.44], [66.03, 20176.25], [50.34, 18341.94], [64.57, 19683.56], [45.49, 23361.3], [29.87, 26179.4], [56.15, 20076.82], [38.74, 22703.73], [52.14, 21097.79], [76.24, 17066.04], [56.82, 24325.44], [37.65, 16628.7], [51.32, 22562.73], [33.15, 15549.87], [36.46, 24013.29], [36.62, 16055.87], [35.74, 11923.66], [44.61, 23510.7], [63.5, 21440.11], [53.07, 19235.56], [83.9, 18591.45], [63.75, 23558.84], [41.81, 15989.03], [51.48, 23629.2], [38.41, 16740.21], [57.21, 24486.44], [47.99, 22829.67], [49.14, 22886.16], [71.39, 24438.33], [68.1, 18917.68], [68.73, 18787.57], [44.24, 19238.99], [39.21, 18780.78], [38.17, 18858.76], [56.84, 20771.79], [47.44, 23628.79], [56.29, 22738.63], [40.43, 18213.87], [42.81, 17892.46], [40.05, 24514.46], [42.26, 22731.39], [67.08, 20819.41], [44.33, 25051.49], [42.7, 23183.45], [20.1, 25864.23], [76.47, 18219.67], [41.52, 23518.41], [50.16, 13290.48], [49.1, 20694.3], [50.04, 22097.89], [30.45, 23407.32], [49.37, 22122.94], [46.53, 15027.2], [57.39, 25595.66], [37.33, 23670.46], [57.26, 19618.02], [30.3, 18696.21], [64.92, 19136.07], [53.17, 22442.94], [37.3, 16946.15], [42.79, 18444.23], [50.1, 22686.28], [49.02, 21215.61], [54.18, 16039.75], [46.29, 24309.59], [47.93, 17028.84], [29.24, 14923.89], [49.15, 24746.54], [43.78, 19092.24], [49.0, 22615.17], [46.92, 20780.55], [36.9, 22848.68], [54.55, 22577.54], [49.28, 19794.11], [43.12, 25204.22], [51.32, 19861.89], [38.01, 22543.56], [35.73, 14680.43], [52.82, 21185.58], [40.08, 25153.54], [43.77, 14365.56], [54.85, 22644.11], [37.61, 23747.24], [40.1, 23106.52], [45.49, 19072.3], [48.83, 21972.55], [47.17, 20429.62], [66.95, 17062.01], [47.73, 19083.27], [66.71, 18792.76], [62.12, 23399.23], [30.88, 19287.8], [61.31, 18675.15], [34.97, 16192.37], [40.95, 16469.07], [45.8, 24345.28], [47.11, 18887.74]]];
+          const SC_C     = ["engagement_score", "lifetime_value"];
+          const STR_BAR  = {"East": [0.0, 96.7, 6.1, 0.0], "North": [100.0, 3.3, 92.2, 0.0], "West": [0.0, 0.0, 1.7, 73.9], "South": [0.0, 0.0, 0.0, 26.1]};
+          const STR_COL  = "region";
+
+          const FONT = "13px 'Segoe UI', system-ui, sans-serif";
+          const MUTED = "#94a3b8";
+          const BG    = "#ffffff";
+          const BORDER= "#e2e8f0";
+
+          /* ── tooltip ── */
+          const tip = document.createElement("div");
+          tip.style.cssText = "position:fixed;background:#1e293b;color:#f8fafc;padding:6px 10px;border-radius:6px;font-size:12px;pointer-events:none;z-index:9999;display:none;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.3)";
+          document.body.appendChild(tip);
+          function showTip(e, html) { tip.innerHTML=html; tip.style.display="block"; moveTip(e); }
+          function moveTip(e) { tip.style.left=(e.clientX+14)+"px"; tip.style.top=(e.clientY-8)+"px"; }
+          function hideTip()  { tip.style.display="none"; }
+
+          /* ── hex → rgba ── */
+          function rgba(hex, a) {
+            const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+            return `rgba(${r},${g},${b},${a})`;
+          }
+
+          /* ── wrap canvas in a card and mount in grid ── */
+          const grid = document.getElementById("plot-grid");
+          function makeCard(canvasId, title, wide=false) {
+            const c = document.getElementById(canvasId);
+            c.style.display = "block";
+            c.style.width   = "100%";
+            c.style.height  = "auto";
+            const wrap = document.createElement("div");
+            wrap.className = wide ? "plot-card plot-wide" : "plot-card";
+            const h = document.createElement("div");
+            h.className = "plot-title"; h.textContent = title;
+            wrap.appendChild(h); wrap.appendChild(c);
+            grid.appendChild(wrap);
+            return c;
+          }
+
+          /* ════════ 1. DONUT ════════ */
+          (function() {
+            if (!DONUT.length) return;
+            const c = makeCard("c-donut", "Cluster Sizes");
+            const ctx = c.getContext("2d");
+            const W=c.width, H=c.height, cx=W/2, cy=H/2, R=Math.min(W,H)*0.36, r=R*0.55;
+            const total = DONUT.reduce((a,b)=>a+b,0);
+            let angles = [], start=-Math.PI/2;
+            DONUT.forEach((v,i)=>{ const a=2*Math.PI*v/total; angles.push([start,start+a,i]); start+=a; });
+
+            function draw(hover) {
+              ctx.clearRect(0,0,W,H);
+              angles.forEach(([s,e,i])=>{
+                ctx.beginPath();
+                const expand = hover===i ? 6 : 0;
+                const mc=(s+e)/2, ex=Math.cos(mc)*expand, ey=Math.sin(mc)*expand;
+                ctx.arc(cx+ex,cy+ey,R,s,e);
+                ctx.arc(cx+ex,cy+ey,r,e,s,true);
+                ctx.closePath();
+                ctx.fillStyle   = PALETTE[i];
+                ctx.globalAlpha = hover!==null && hover!==i ? 0.45 : 1;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+                ctx.strokeStyle = BG; ctx.lineWidth=2; ctx.stroke();
+              });
+              /* centre label */
+              ctx.font = "bold 22px 'Segoe UI',sans-serif";
+              ctx.fillStyle="#0f172a"; ctx.textAlign="center"; ctx.textBaseline="middle";
+              ctx.fillText(total.toLocaleString(), cx, cy-8);
+              ctx.font="12px 'Segoe UI',sans-serif"; ctx.fillStyle=MUTED;
+              ctx.fillText("total rows", cx, cy+12);
+              /* legend */
+              let lx=20, ly=H-20-K*20;
+              DONUT.forEach((v,i)=>{
+                ctx.fillStyle=PALETTE[i]; ctx.fillRect(lx,ly+i*20,12,12);
+                ctx.font=FONT; ctx.fillStyle="#334155"; ctx.textAlign="left"; ctx.textBaseline="middle";
+                ctx.fillText(`${CL_NAMES[i]}  ${v.toLocaleString()} (${(v/total*100).toFixed(1)}%)`, lx+18, ly+i*20+6);
+              });
+            }
+            draw(null);
+            c.addEventListener("mousemove",e=>{
+              const rect=c.getBoundingClientRect(), mx=(e.clientX-rect.left)*(c.width/rect.width), my=(e.clientY-rect.top)*(c.height/rect.height);
+              const dx=mx-cx, dy=my-cy, dist=Math.hypot(dx,dy);
+              if (dist>r && dist<R+10) {
+                const angle = (Math.atan2(dy,dx)+2.5*Math.PI)%(2*Math.PI)-0.5*Math.PI;
+                const norm  = ((angle%(2*Math.PI))+2*Math.PI)%(2*Math.PI);
+                for (const [s,e2,i] of angles) {
+                  const ns=((s+Math.PI/2+2*Math.PI)%(2*Math.PI)), ne=((e2+Math.PI/2+2*Math.PI)%(2*Math.PI));
+                  const inArc = ns<ne ? norm>=ns&&norm<=ne : norm>=ns||norm<=ne;
+                  if(inArc) { draw(i); showTip(e,`${CL_NAMES[i]}: ${DONUT[i].toLocaleString()} rows (${(DONUT[i]/total*100).toFixed(1)}%)`); return; }
+                }
+              }
+              draw(null); hideTip();
+            });
+            c.addEventListener("mouseleave",()=>{ draw(null); hideTip(); });
+          })();
+
+          /* ════════ 2. HEATMAP ════════ */
+          (function() {
+            if (!HMAP.length || !HMAP_C.length) return;
+            const c = makeCard("c-heatmap", "Feature Means Heatmap");
+            const ctx = c.getContext("2d");
+            const W=c.width, H=c.height;
+            const PAD={t:16,b:80,l:90,r:16};
+            const nC=HMAP_C.length, nR=HMAP.length;
+            const cw=(W-PAD.l-PAD.r)/nC, rh=(H-PAD.t-PAD.b)/nR;
+
+            /* normalise each column 0→1 */
+            const norm=HMAP.map(r=>[...r]);
+            for(let ci=0;ci<nC;ci++){
+              let mn=Infinity,mx=-Infinity;
+              HMAP.forEach(r=>{ if(r[ci]<mn)mn=r[ci]; if(r[ci]>mx)mx=r[ci]; });
+              norm.forEach((r,ri)=>{ r[ci]= mx===mn ? 0.5 : (HMAP[ri][ci]-mn)/(mx-mn); });
+            }
+
+            function lerp(a,b,t){ return a+(b-a)*t; }
+            function heatColor(t, clusterIdx) {
+              const hex=PALETTE[clusterIdx];
+              const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+              const a = 0.08 + t*0.88;
+              return `rgba(${r},${g},${b},${a})`;
+            }
+
+            function draw(hx,hy) {
+              ctx.clearRect(0,0,W,H);
+              for(let ri=0;ri<nR;ri++){
+                for(let ci=0;ci<nC;ci++){
+                  const x=PAD.l+ci*cw, y=PAD.t+ri*rh;
+                  ctx.fillStyle = hx===ci&&hy===ri ? "rgba(15,23,42,0.12)" : heatColor(norm[ri][ci],ri);
+                  ctx.fillRect(x,y,cw-2,rh-2);
+                  ctx.font="bold 11px 'Segoe UI',sans-serif";
+                  ctx.fillStyle= norm[ri][ci]>0.6 ? "#fff" : "#334155";
+                  ctx.textAlign="center"; ctx.textBaseline="middle";
+                  const v=HMAP[ri][ci];
+                  ctx.fillText(Math.abs(v)>=1000?v.toFixed(0):(Math.abs(v)>=10?v.toFixed(1):v.toFixed(2)), x+cw/2-1, y+rh/2-1);
+                }
+              }
+              /* col labels */
+              ctx.font=FONT; ctx.fillStyle=MUTED; ctx.textAlign="center";
+              HMAP_C.forEach((col,ci)=>{
+                ctx.save(); ctx.translate(PAD.l+ci*cw+cw/2, H-PAD.b+14);
+                ctx.rotate(-0.4); ctx.fillText(col,0,0); ctx.restore();
+              });
+              /* row labels */
+              ctx.textAlign="right"; ctx.textBaseline="middle";
+              HMAP.forEach((_,ri)=>{
+                ctx.fillStyle=PALETTE[ri]; ctx.font="bold 11px 'Segoe UI',sans-serif";
+                ctx.fillText(CL_NAMES[ri], PAD.l-8, PAD.t+ri*rh+rh/2);
+              });
+            }
+            draw(-1,-1);
+            c.addEventListener("mousemove",e=>{
+              const rect=c.getBoundingClientRect();
+              const mx=(e.clientX-rect.left)*(c.width/rect.width)-PAD.l;
+              const my=(e.clientY-rect.top)*(c.height/rect.height)-PAD.t;
+              const ci=Math.floor(mx/cw), ri=Math.floor(my/rh);
+              if(ci>=0&&ci<nC&&ri>=0&&ri<nR){
+                draw(ci,ri);
+                showTip(e,`${CL_NAMES[ri]} · ${HMAP_C[ci]}: ${HMAP[ri][ci].toFixed(4)}`);
+              } else { draw(-1,-1); hideTip(); }
+            });
+            c.addEventListener("mouseleave",()=>{ draw(-1,-1); hideTip(); });
+          })();
+
+          /* ════════ 3. PARALLEL COORDINATES ════════ */
+          (function() {
+            if (!PC.length || !PC_C.length) return;
+            const c = makeCard("c-parallel", "Parallel Coordinates  (normalised cluster means)");
+            const ctx = c.getContext("2d");
+            const W=c.width, H=c.height;
+            const PAD={t:24,b:50,l:40,r:40};
+            const nAxes=PC_C.length;
+            const axisX = PC_C.map((_,i)=>PAD.l+(W-PAD.l-PAD.r)/(nAxes-1||1)*i);
+            const axisH = H-PAD.t-PAD.b;
+
+            function yOf(val){ return PAD.t+axisH*(1-val); }
+
+            function draw(hov) {
+              ctx.clearRect(0,0,W,H);
+              /* axes */
+              axisX.forEach((x,i)=>{
+                ctx.strokeStyle=BORDER; ctx.lineWidth=1.5;
+                ctx.beginPath(); ctx.moveTo(x,PAD.t); ctx.lineTo(x,PAD.t+axisH); ctx.stroke();
+                ctx.font=FONT; ctx.fillStyle=MUTED; ctx.textAlign="center";
+                ctx.fillText(PC_C[i], x, H-PAD.b+16);
+                /* tick labels */
+                ctx.fillText("max",x,PAD.t-8); ctx.fillText("min",x,PAD.t+axisH+8);
+              });
+              /* lines */
+              PC.forEach((pts,ci)=>{
+                ctx.beginPath();
+                pts.forEach((v,i)=>{ i===0?ctx.moveTo(axisX[i],yOf(v)):ctx.lineTo(axisX[i],yOf(v)); });
+                ctx.strokeStyle=PALETTE[ci];
+                ctx.lineWidth = hov===ci ? 3.5 : 1.8;
+                ctx.globalAlpha = hov!==null&&hov!==ci ? 0.25 : 1;
+                ctx.stroke(); ctx.globalAlpha=1;
+                /* dots */
+                pts.forEach((v,i)=>{
+                  ctx.beginPath(); ctx.arc(axisX[i],yOf(v),hov===ci?5:3,0,2*Math.PI);
+                  ctx.fillStyle=PALETTE[ci]; ctx.fill();
+                });
+              });
+            }
+            draw(null);
+
+            c.addEventListener("mousemove",e=>{
+              const rect=c.getBoundingClientRect();
+              const mx=(e.clientX-rect.left)*(c.width/rect.width);
+              const my=(e.clientY-rect.top)*(c.height/rect.height);
+              let hit=null, best=Infinity;
+              PC.forEach((pts,ci)=>{
+                pts.forEach((v,i)=>{
+                  const d=Math.hypot(mx-axisX[i], my-yOf(v));
+                  if(d<best&&d<18){ best=d; hit=ci; }
+                });
+              });
+              if(hit!==null){
+                draw(hit);
+                const row=PC[hit].map((v,i)=>`${PC_C[i]}: ${v.toFixed(2)}`).join(" · ");
+                showTip(e,`${CL_NAMES[hit]} — ${row}`);
+              } else { draw(null); hideTip(); }
+            });
+            c.addEventListener("mouseleave",()=>{ draw(null); hideTip(); });
+          })();
+
+          /* ════════ 4. CV% GROUPED BAR ════════ */
+          (function() {
+            if (!CV.length || !CV_C.length) return;
+            const c = makeCard("c-cvbar", "Within-Cluster Spread  (CV%)");
+            const ctx = c.getContext("2d");
+            const W=c.width, H=c.height;
+            const PAD={t:24,b:70,l:48,r:16};
+            const nGroups=CV_C.length, nBars=K;
+            const gw=(W-PAD.l-PAD.r)/nGroups, bw=gw*0.72/nBars;
+            const maxVal=Math.max(50, ...CV.flat());
+
+            function yScale(v){ return PAD.t+(H-PAD.t-PAD.b)*(1-v/maxVal); }
+
+            function draw(hg,hb) {
+              ctx.clearRect(0,0,W,H);
+              /* y axis */
+              [0,25,50].filter(v=>v<=maxVal+5).forEach(v=>{
+                const y=yScale(v);
+                ctx.strokeStyle=BORDER; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+                ctx.beginPath(); ctx.moveTo(PAD.l,y); ctx.lineTo(W-PAD.r,y); ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.font="11px 'Segoe UI',sans-serif"; ctx.fillStyle=MUTED; ctx.textAlign="right";
+                ctx.fillText(v+"%",PAD.l-6,y+4);
+              });
+              /* bars */
+              CV_C.forEach((col,gi)=>{
+                const gx=PAD.l+gi*gw+gw*0.14;
+                CV.forEach((row,bi)=>{
+                  const v=row[gi]||0;
+                  const x=gx+bi*bw;
+                  const y=yScale(v), barH=H-PAD.b-y;
+                  ctx.fillStyle=PALETTE[bi];
+                  ctx.globalAlpha=(hg===gi&&hb===bi)?1:(hg===gi||hg===-1)?0.8:0.3;
+                  ctx.beginPath();
+                  ctx.roundRect(x,y,bw-2,Math.max(barH,1),[3,3,0,0]);
+                  ctx.fill(); ctx.globalAlpha=1;
+                });
+                /* col label */
+                ctx.font=FONT; ctx.fillStyle=MUTED; ctx.textAlign="center";
+                ctx.save(); ctx.translate(PAD.l+gi*gw+gw/2, H-PAD.b+14); ctx.rotate(-0.4); ctx.fillText(col,0,0); ctx.restore();
+              });
+              /* legend */
+              CV.forEach((_,bi)=>{
+                const lx=PAD.l+bi*90;
+                ctx.fillStyle=PALETTE[bi]; ctx.fillRect(lx,H-18,10,10);
+                ctx.font=FONT; ctx.fillStyle="#334155"; ctx.textAlign="left";
+                ctx.fillText(CL_NAMES[bi],lx+14,H-10);
+              });
+            }
+            draw(-1,-1);
+
+            c.addEventListener("mousemove",e=>{
+              const rect=c.getBoundingClientRect();
+              const mx=(e.clientX-rect.left)*(c.width/rect.width);
+              const my=(e.clientY-rect.top)*(c.height/rect.height);
+              let hg=-1,hb=-1;
+              CV_C.forEach((col,gi)=>{
+                const gx=PAD.l+gi*gw+gw*0.14;
+                CV.forEach((row,bi)=>{
+                  const x=gx+bi*bw, v=row[gi]||0;
+                  const y=yScale(v), barH=H-PAD.b-y;
+                  if(mx>=x&&mx<=x+bw-2&&my>=y&&my<=y+barH){ hg=gi;hb=bi; }
+                });
+              });
+              if(hg>=0){
+                draw(hg,hb);
+                showTip(e,`${CL_NAMES[hb]} · ${CV_C[hg]}: ${(CV[hb][hg]||0).toFixed(1)}% CV`);
+              } else { draw(-1,-1); hideTip(); }
+            });
+            c.addEventListener("mouseleave",()=>{ draw(-1,-1); hideTip(); });
+          })();
+
+          /* ════════ 5. SCATTER MATRIX ════════ */
+          (function() {
+            if (!SC.length || SC_C.length<2) return;
+            const c = makeCard("c-scatter", "Scatter Matrix  (sample up to 300 pts/cluster)", true);
+            const ctx = c.getContext("2d");
+            const W=c.width, H=c.height;
+            const nDim=SC_C.length;
+            const PAD={t:30,b:30,l:60,r:16};
+            const cellW=(W-PAD.l-PAD.r)/nDim, cellH=(H-PAD.t-PAD.b)/nDim;
+
+            /* precompute global min/max per dim */
+            const mins=SC_C.map(()=>Infinity), maxs=SC_C.map(()=>-Infinity);
+            SC.forEach(clPts=>clPts.forEach(pt=>pt.forEach((v,d)=>{ if(v<mins[d])mins[d]=v; if(v>maxs[d])maxs[d]=v; })));
+            function scale(v,d,target){ return mins[d]===maxs[d]?target/2:(v-mins[d])/(maxs[d]-mins[d])*target; }
+
+            ctx.clearRect(0,0,W,H);
+            for(let r=0;r<nDim;r++){
+              for(let col=0;col<nDim;col++){
+                const ox=PAD.l+col*cellW, oy=PAD.t+r*cellH;
+                ctx.strokeStyle=BORDER; ctx.lineWidth=0.5;
+                ctx.strokeRect(ox,oy,cellW,cellH);
+                if(r===col){
+                  ctx.font="bold 11px 'Segoe UI',sans-serif"; ctx.fillStyle="#334155";
+                  ctx.textAlign="center"; ctx.textBaseline="middle";
+                  ctx.fillText(SC_C[r],ox+cellW/2,oy+cellH/2);
+                } else {
+                  const PR=3,PD=4;
+                  SC.forEach((clPts,ci)=>{
+                    ctx.fillStyle=rgba(PALETTE[ci],0.55);
+                    clPts.forEach(pt=>{
+                      const x=ox+PR+scale(pt[col],col,cellW-PR*2);
+                      const y=oy+PR+((cellH-PR*2)-scale(pt[r],r,cellH-PR*2));
+                      ctx.beginPath(); ctx.arc(x,y,1.5,0,2*Math.PI); ctx.fill();
+                    });
+                  });
+                }
+              }
+            }
+            /* axis labels */
+            SC_C.forEach((col,i)=>{
+              ctx.font=FONT; ctx.fillStyle=MUTED; ctx.textAlign="center";
+              ctx.fillText(col, PAD.l+i*cellW+cellW/2, PAD.t-12);
+              ctx.save(); ctx.translate(PAD.l-36, PAD.t+i*cellH+cellH/2);
+              ctx.rotate(-Math.PI/2); ctx.fillText(col,0,0); ctx.restore();
+            });
+          })();
+
+          /* ════════ 6. STACKED BAR (string col) ════════ */
+          (function() {
+            if (!STR_COL || !Object.keys(STR_BAR).length) return;
+            const cats=Object.keys(STR_BAR);
+            const c = makeCard("c-strbar", `Category Mix by Cluster  (${STR_COL})`);
+            const ctx = c.getContext("2d");
+            const W=c.width, H=c.height;
+            const PAD={t:24,b:70,l:48,r:16};
+            const bw=(W-PAD.l-PAD.r)/K*0.6, gap=(W-PAD.l-PAD.r)/K;
+            const catColors=["#6366f1","#f59e0b","#10b981","#ef4444","#8b5cf6","#06b6d4"];
+
+            function draw(hk) {
+              ctx.clearRect(0,0,W,H);
+              const barH=H-PAD.t-PAD.b;
+              for(let ki=0;ki<K;ki++){
+                const x=PAD.l+ki*gap+(gap-bw)/2;
+                let base=H-PAD.b;
+                cats.forEach((cat,ci)=>{
+                  const pct=STR_BAR[cat][ki];
+                  const h=barH*pct/100;
+                  ctx.fillStyle=catColors[ci%catColors.length];
+                  ctx.globalAlpha=hk!==null&&hk!==ki?0.35:1;
+                  ctx.fillRect(x,base-h,bw,h);
+                  if(h>14){
+                    ctx.font="bold 10px 'Segoe UI',sans-serif";
+                    ctx.fillStyle="#fff"; ctx.globalAlpha=1;
+                    ctx.textAlign="center"; ctx.textBaseline="middle";
+                    ctx.fillText(pct+"%",x+bw/2,base-h/2);
+                  }
+                  base-=h;
+                });
+                ctx.globalAlpha=1;
+                ctx.font=FONT; ctx.fillStyle=PALETTE[ki]; ctx.textAlign="center";
+                ctx.fillText(CL_NAMES[ki], x+bw/2, H-PAD.b+16);
+              }
+              /* legend */
+              let lx=PAD.l;
+              cats.forEach((cat,ci)=>{
+                ctx.fillStyle=catColors[ci%catColors.length]; ctx.fillRect(lx,H-18,10,10);
+                ctx.font=FONT; ctx.fillStyle="#334155"; ctx.textAlign="left";
+                ctx.fillText(cat,lx+14,H-10); lx+=ctx.measureText(cat).width+36;
+              });
+            }
+            draw(null);
+
+            c.addEventListener("mousemove",e=>{
+              const rect=c.getBoundingClientRect();
+              const mx=(e.clientX-rect.left)*(c.width/rect.width);
+              let hk=null;
+              for(let ki=0;ki<K;ki++){
+                const x=PAD.l+ki*gap+(gap-bw)/2;
+                if(mx>=x&&mx<=x+bw) hk=ki;
+              }
+              if(hk!==null){
+                draw(hk);
+                const rows=cats.map(cat=>`${cat}: ${STR_BAR[cat][hk]}%`).join(" · ");
+                showTip(e,`${CL_NAMES[hk]} — ${rows}`);
+              } else { draw(null); hideTip(); }
+            });
+            c.addEventListener("mouseleave",()=>{ draw(null); hideTip(); });
+          })();
+
+        })();
+        </script>
 
         <section>
           <h2>Clustering Performance</h2>
@@ -490,7 +936,7 @@
             <div class="metric-card">
               <div class="metric-label">Inertia (WCSS)</div>
               <div class="metric-desc">Sum of squared distances to cluster centres. Lower is better.</div>
-              <div class="metric-value" style="font-size:1.6rem;font-weight:700;color:#ca8a04">7,544.9771</div>
+              <div class="metric-value" style="font-size:1.6rem;font-weight:700;color:#ca8a04">3,773.2486</div>
               <p class="muted">⚠ Inertia is on the scaled space.</p>
             </div>
 
@@ -499,21 +945,21 @@
               <div class="metric-desc">Range [−1, 1]. Similarity to own cluster vs others. Higher is better.</div>
               
               <div class="metric-bar-wrap">
-                <div class="metric-bar-fill" style="width:73%;background:#ca8a04"></div>
+                <div class="metric-bar-fill" style="width:78%;background:#16a34a"></div>
               </div>
-              <div class="metric-value">+0.4668 &nbsp;<span class="rating-badge rating-fair">Fair</span></div>
+              <div class="metric-value">+0.5766 &nbsp;<span class="rating-badge rating-good">Good</span></div>
             </div>
 
             <div class="metric-card">
               <div class="metric-label">Davies-Bouldin Index</div>
               <div class="metric-desc">Avg scatter-to-separation ratio. Lower is better. 0 = perfect.</div>
-              <div class="metric-value" style="color:#ca8a04;font-size:1.5rem;font-weight:700">0.7667</div><div><span class="rating-badge rating-good">Good</span></div>
+              <div class="metric-value" style="color:#ca8a04;font-size:1.5rem;font-weight:700">0.6890</div><div><span class="rating-badge rating-good">Good</span></div>
             </div>
 
             <div class="metric-card">
               <div class="metric-label">Convergence</div>
               <div class="metric-desc">Iterations until centroids stabilised.</div>
-              <div class="metric-value" style="font-size:1.6rem;font-weight:700">5</div>
+              <div class="metric-value" style="font-size:1.6rem;font-weight:700">6</div>
             </div>
 
           </div>

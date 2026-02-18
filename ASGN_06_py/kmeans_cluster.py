@@ -1046,6 +1046,547 @@ class HtmlReport:
           </div>
         </section>""")
 
+    # ── Plots ──────────────────────────────────────────────────────────────────
+    def add_plots(
+        self,
+        df_original: "pd.DataFrame",
+        labels: "np.ndarray",
+        num_means: "pd.DataFrame",
+        num_cvs: "pd.DataFrame",
+        sizes: "pd.Series",
+    ) -> None:
+        """Inject a plots section with 6 interactive Canvas charts."""
+        import json, numpy as np
+
+        palette  = [_hc(i) for i in range(self.k)]
+        cl_names = [f"Cluster {i}" for i in range(self.k)]
+
+        # ── Gather numeric cluster cols only (not display-only) ──
+        cluster_num = [c for c in self.numeric_cols if c not in self.display_cols]
+
+        # ── 1. Cluster sizes (donut) ──
+        donut_data = json.dumps([int(sizes.get(i, 0)) for i in range(self.k)])
+
+        # ── 2. Feature means heatmap ──
+        if cluster_num and not num_means.empty:
+            hm_cols = cluster_num[:8]  # cap at 8 cols
+            hm_rows = []
+            for c in range(self.k):
+                row = []
+                for col in hm_cols:
+                    row.append(round(float(num_means.loc[c, col]), 4) if c in num_means.index and col in num_means.columns else 0)
+                hm_rows.append(row)
+            hmap_data  = json.dumps(hm_rows)
+            hmap_cols  = json.dumps(hm_cols)
+        else:
+            hmap_data = "[]"; hmap_cols = "[]"
+
+        # ── 3. Parallel coordinates (cluster means, normalised 0-1) ──
+        if cluster_num and not num_means.empty:
+            pc_cols = cluster_num[:8]
+            col_mins = {c: float(num_means[c].min()) for c in pc_cols if c in num_means.columns}
+            col_maxs = {c: float(num_means[c].max()) for c in pc_cols if c in num_means.columns}
+            pc_lines = []
+            for ci in range(self.k):
+                pts = []
+                for col in pc_cols:
+                    if col in num_means.columns and ci in num_means.index:
+                        mn, mx = col_mins[col], col_maxs[col]
+                        v = float(num_means.loc[ci, col])
+                        pts.append(round((v - mn) / (mx - mn) if mx != mn else 0.5, 4))
+                    else:
+                        pts.append(0.5)
+                pc_lines.append(pts)
+            pc_data = json.dumps(pc_lines)
+            pc_cols_json = json.dumps(pc_cols)
+        else:
+            pc_data = "[]"; pc_cols_json = "[]"
+
+        # ── 4. CV% grouped bar ──
+        if cluster_num and not num_cvs.empty:
+            cv_cols = [c for c in cluster_num if c in num_cvs.columns][:8]
+            cv_rows = []
+            for ci in range(self.k):
+                row = []
+                for col in cv_cols:
+                    v = float(num_cvs.loc[ci, col]) if ci in num_cvs.index else 0
+                    row.append(round(v if not math.isnan(v) else 0, 2))
+                cv_rows.append(row)
+            cv_data      = json.dumps(cv_rows)
+            cv_cols_json = json.dumps(cv_cols)
+        else:
+            cv_data = "[]"; cv_cols_json = "[]"
+
+        # ── 5. Scatter matrix — sample up to 300 pts per cluster for performance ──
+        if len(cluster_num) >= 2:
+            sc_cols = cluster_num[:4]
+            df_sc   = df_original[sc_cols].copy()
+            df_sc["_c"] = labels
+            pts_by_cluster = []
+            for ci in range(self.k):
+                sub = df_sc[df_sc["_c"] == ci][sc_cols]
+                if len(sub) > 800:
+                    sub = sub.sample(800, random_state=42)
+                pts_by_cluster.append(sub.values.tolist())
+            scatter_data     = json.dumps(pts_by_cluster)
+            scatter_cols     = json.dumps(sc_cols)
+        else:
+            scatter_data = "[]"; scatter_cols = "[]"
+
+        # ── 6. String stacked bar (first string col, if any) ──
+        all_str = self.string_cols
+        if all_str:
+            str_col = all_str[0]
+            df_tmp  = df_original[[str_col]].copy()
+            df_tmp["_c"] = labels
+            all_cats = df_tmp[str_col].value_counts().index.tolist()[:6]
+            cat_data = {}
+            for cat in all_cats:
+                row = []
+                for ci in range(self.k):
+                    sub   = df_tmp[df_tmp["_c"] == ci]
+                    total = len(sub)
+                    n     = int((sub[str_col] == cat).sum())
+                    row.append(round(n / total * 100, 1) if total > 0 else 0)
+                cat_data[cat] = row
+            str_bar_data = json.dumps(cat_data)
+            str_bar_col  = json.dumps(str_col)
+        else:
+            str_bar_data = "{}"; str_bar_col = '""'
+
+        self._sections.append(f"""
+        <section>
+          <h2>Cluster Visualisations <span class="subtitle">6 views — hover for values</span></h2>
+          <div class="plot-grid" id="plot-grid"></div>
+          <canvas id="c-donut"   width="320" height="320" style="display:none"></canvas>
+          <canvas id="c-heatmap" width="600" height="260" style="display:none"></canvas>
+          <canvas id="c-parallel"width="600" height="260" style="display:none"></canvas>
+          <canvas id="c-cvbar"   width="600" height="260" style="display:none"></canvas>
+          <canvas id="c-scatter" width="600" height="600" style="display:none"></canvas>
+          <canvas id="c-strbar"  width="600" height="260" style="display:none"></canvas>
+        </section>
+
+        <script>
+        (function() {{
+          const PALETTE  = {json.dumps(palette)};
+          const K        = {self.k};
+          const CL_NAMES = {json.dumps(cl_names)};
+          const DONUT    = {donut_data};
+          const HMAP     = {hmap_data};
+          const HMAP_C   = {hmap_cols};
+          const PC       = {pc_data};
+          const PC_C     = {pc_cols_json};
+          const CV       = {cv_data};
+          const CV_C     = {cv_cols_json};
+          const SC       = {scatter_data};
+          const SC_C     = {scatter_cols};
+          const STR_BAR  = {str_bar_data};
+          const STR_COL  = {str_bar_col};
+
+          const FONT = "13px 'Segoe UI', system-ui, sans-serif";
+          const MUTED = "#94a3b8";
+          const BG    = "#ffffff";
+          const BORDER= "#e2e8f0";
+
+          /* ── tooltip ── */
+          const tip = document.createElement("div");
+          tip.style.cssText = "position:fixed;background:#1e293b;color:#f8fafc;padding:6px 10px;border-radius:6px;font-size:12px;pointer-events:none;z-index:9999;display:none;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.3)";
+          document.body.appendChild(tip);
+          function showTip(e, html) {{ tip.innerHTML=html; tip.style.display="block"; moveTip(e); }}
+          function moveTip(e) {{ tip.style.left=(e.clientX+14)+"px"; tip.style.top=(e.clientY-8)+"px"; }}
+          function hideTip()  {{ tip.style.display="none"; }}
+
+          /* ── hex → rgba ── */
+          function rgba(hex, a) {{
+            const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+            return `rgba(${{r}},${{g}},${{b}},${{a}})`;
+          }}
+
+          /* ── wrap canvas in a card and mount in grid ── */
+          const grid = document.getElementById("plot-grid");
+          function makeCard(canvasId, title, wide=false) {{
+            const c = document.getElementById(canvasId);
+            c.style.display = "block";
+            c.style.width   = "100%";
+            c.style.height  = "auto";
+            const wrap = document.createElement("div");
+            wrap.className = wide ? "plot-card plot-wide" : "plot-card";
+            const h = document.createElement("div");
+            h.className = "plot-title"; h.textContent = title;
+            wrap.appendChild(h); wrap.appendChild(c);
+            grid.appendChild(wrap);
+            return c;
+          }}
+
+          /* ════════ 1. DONUT ════════ */
+          (function() {{
+            if (!DONUT.length) return;
+            const c = makeCard("c-donut", "Cluster Sizes");
+            const ctx = c.getContext("2d");
+            const W=c.width, H=c.height, cx=W/2, cy=H/2, R=Math.min(W,H)*0.36, r=R*0.55;
+            const total = DONUT.reduce((a,b)=>a+b,0);
+            let angles = [], start=-Math.PI/2;
+            DONUT.forEach((v,i)=>{{ const a=2*Math.PI*v/total; angles.push([start,start+a,i]); start+=a; }});
+
+            function draw(hover) {{
+              ctx.clearRect(0,0,W,H);
+              angles.forEach(([s,e,i])=>{{
+                ctx.beginPath();
+                const expand = hover===i ? 6 : 0;
+                const mc=(s+e)/2, ex=Math.cos(mc)*expand, ey=Math.sin(mc)*expand;
+                ctx.arc(cx+ex,cy+ey,R,s,e);
+                ctx.arc(cx+ex,cy+ey,r,e,s,true);
+                ctx.closePath();
+                ctx.fillStyle   = PALETTE[i];
+                ctx.globalAlpha = hover!==null && hover!==i ? 0.45 : 1;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+                ctx.strokeStyle = BG; ctx.lineWidth=2; ctx.stroke();
+              }});
+              /* centre label */
+              ctx.font = "bold 22px 'Segoe UI',sans-serif";
+              ctx.fillStyle="#0f172a"; ctx.textAlign="center"; ctx.textBaseline="middle";
+              ctx.fillText(total.toLocaleString(), cx, cy-8);
+              ctx.font="12px 'Segoe UI',sans-serif"; ctx.fillStyle=MUTED;
+              ctx.fillText("total rows", cx, cy+12);
+              /* legend */
+              let lx=20, ly=H-20-K*20;
+              DONUT.forEach((v,i)=>{{
+                ctx.fillStyle=PALETTE[i]; ctx.fillRect(lx,ly+i*20,12,12);
+                ctx.font=FONT; ctx.fillStyle="#334155"; ctx.textAlign="left"; ctx.textBaseline="middle";
+                ctx.fillText(`${{CL_NAMES[i]}}  ${{v.toLocaleString()}} (${{(v/total*100).toFixed(1)}}%)`, lx+18, ly+i*20+6);
+              }});
+            }}
+            draw(null);
+            c.addEventListener("mousemove",e=>{{
+              const rect=c.getBoundingClientRect(), mx=(e.clientX-rect.left)*(c.width/rect.width), my=(e.clientY-rect.top)*(c.height/rect.height);
+              const dx=mx-cx, dy=my-cy, dist=Math.hypot(dx,dy);
+              if (dist>r && dist<R+10) {{
+                const angle = (Math.atan2(dy,dx)+2.5*Math.PI)%(2*Math.PI)-0.5*Math.PI;
+                const norm  = ((angle%(2*Math.PI))+2*Math.PI)%(2*Math.PI);
+                for (const [s,e2,i] of angles) {{
+                  const ns=((s+Math.PI/2+2*Math.PI)%(2*Math.PI)), ne=((e2+Math.PI/2+2*Math.PI)%(2*Math.PI));
+                  const inArc = ns<ne ? norm>=ns&&norm<=ne : norm>=ns||norm<=ne;
+                  if(inArc) {{ draw(i); showTip(e,`${{CL_NAMES[i]}}: ${{DONUT[i].toLocaleString()}} rows (${{(DONUT[i]/total*100).toFixed(1)}}%)`); return; }}
+                }}
+              }}
+              draw(null); hideTip();
+            }});
+            c.addEventListener("mouseleave",()=>{{ draw(null); hideTip(); }});
+          }})();
+
+          /* ════════ 2. HEATMAP ════════ */
+          (function() {{
+            if (!HMAP.length || !HMAP_C.length) return;
+            const c = makeCard("c-heatmap", "Feature Means Heatmap");
+            const ctx = c.getContext("2d");
+            const W=c.width, H=c.height;
+            const PAD={{t:16,b:80,l:90,r:16}};
+            const nC=HMAP_C.length, nR=HMAP.length;
+            const cw=(W-PAD.l-PAD.r)/nC, rh=(H-PAD.t-PAD.b)/nR;
+
+            /* normalise each column 0→1 */
+            const norm=HMAP.map(r=>[...r]);
+            for(let ci=0;ci<nC;ci++){{
+              let mn=Infinity,mx=-Infinity;
+              HMAP.forEach(r=>{{ if(r[ci]<mn)mn=r[ci]; if(r[ci]>mx)mx=r[ci]; }});
+              norm.forEach((r,ri)=>{{ r[ci]= mx===mn ? 0.5 : (HMAP[ri][ci]-mn)/(mx-mn); }});
+            }}
+
+            function lerp(a,b,t){{ return a+(b-a)*t; }}
+            function heatColor(t, clusterIdx) {{
+              const hex=PALETTE[clusterIdx];
+              const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+              const a = 0.08 + t*0.88;
+              return `rgba(${{r}},${{g}},${{b}},${{a}})`;
+            }}
+
+            function draw(hx,hy) {{
+              ctx.clearRect(0,0,W,H);
+              for(let ri=0;ri<nR;ri++){{
+                for(let ci=0;ci<nC;ci++){{
+                  const x=PAD.l+ci*cw, y=PAD.t+ri*rh;
+                  ctx.fillStyle = hx===ci&&hy===ri ? "rgba(15,23,42,0.12)" : heatColor(norm[ri][ci],ri);
+                  ctx.fillRect(x,y,cw-2,rh-2);
+                  ctx.font="bold 11px 'Segoe UI',sans-serif";
+                  ctx.fillStyle= norm[ri][ci]>0.6 ? "#fff" : "#334155";
+                  ctx.textAlign="center"; ctx.textBaseline="middle";
+                  const v=HMAP[ri][ci];
+                  ctx.fillText(Math.abs(v)>=1000?v.toFixed(0):(Math.abs(v)>=10?v.toFixed(1):v.toFixed(2)), x+cw/2-1, y+rh/2-1);
+                }}
+              }}
+              /* col labels */
+              ctx.font=FONT; ctx.fillStyle=MUTED; ctx.textAlign="center";
+              HMAP_C.forEach((col,ci)=>{{
+                ctx.save(); ctx.translate(PAD.l+ci*cw+cw/2, H-PAD.b+14);
+                ctx.rotate(-0.4); ctx.fillText(col,0,0); ctx.restore();
+              }});
+              /* row labels */
+              ctx.textAlign="right"; ctx.textBaseline="middle";
+              HMAP.forEach((_,ri)=>{{
+                ctx.fillStyle=PALETTE[ri]; ctx.font="bold 11px 'Segoe UI',sans-serif";
+                ctx.fillText(CL_NAMES[ri], PAD.l-8, PAD.t+ri*rh+rh/2);
+              }});
+            }}
+            draw(-1,-1);
+            c.addEventListener("mousemove",e=>{{
+              const rect=c.getBoundingClientRect();
+              const mx=(e.clientX-rect.left)*(c.width/rect.width)-PAD.l;
+              const my=(e.clientY-rect.top)*(c.height/rect.height)-PAD.t;
+              const ci=Math.floor(mx/cw), ri=Math.floor(my/rh);
+              if(ci>=0&&ci<nC&&ri>=0&&ri<nR){{
+                draw(ci,ri);
+                showTip(e,`${{CL_NAMES[ri]}} · ${{HMAP_C[ci]}}: ${{HMAP[ri][ci].toFixed(4)}}`);
+              }} else {{ draw(-1,-1); hideTip(); }}
+            }});
+            c.addEventListener("mouseleave",()=>{{ draw(-1,-1); hideTip(); }});
+          }})();
+
+          /* ════════ 3. PARALLEL COORDINATES ════════ */
+          (function() {{
+            if (!PC.length || !PC_C.length) return;
+            const c = makeCard("c-parallel", "Parallel Coordinates  (normalised cluster means)");
+            const ctx = c.getContext("2d");
+            const W=c.width, H=c.height;
+            const PAD={{t:24,b:50,l:40,r:40}};
+            const nAxes=PC_C.length;
+            const axisX = PC_C.map((_,i)=>PAD.l+(W-PAD.l-PAD.r)/(nAxes-1||1)*i);
+            const axisH = H-PAD.t-PAD.b;
+
+            function yOf(val){{ return PAD.t+axisH*(1-val); }}
+
+            function draw(hov) {{
+              ctx.clearRect(0,0,W,H);
+              /* axes */
+              axisX.forEach((x,i)=>{{
+                ctx.strokeStyle=BORDER; ctx.lineWidth=1.5;
+                ctx.beginPath(); ctx.moveTo(x,PAD.t); ctx.lineTo(x,PAD.t+axisH); ctx.stroke();
+                ctx.font=FONT; ctx.fillStyle=MUTED; ctx.textAlign="center";
+                ctx.fillText(PC_C[i], x, H-PAD.b+16);
+                /* tick labels */
+                ctx.fillText("max",x,PAD.t-8); ctx.fillText("min",x,PAD.t+axisH+8);
+              }});
+              /* lines */
+              PC.forEach((pts,ci)=>{{
+                ctx.beginPath();
+                pts.forEach((v,i)=>{{ i===0?ctx.moveTo(axisX[i],yOf(v)):ctx.lineTo(axisX[i],yOf(v)); }});
+                ctx.strokeStyle=PALETTE[ci];
+                ctx.lineWidth = hov===ci ? 3.5 : 1.8;
+                ctx.globalAlpha = hov!==null&&hov!==ci ? 0.25 : 1;
+                ctx.stroke(); ctx.globalAlpha=1;
+                /* dots */
+                pts.forEach((v,i)=>{{
+                  ctx.beginPath(); ctx.arc(axisX[i],yOf(v),hov===ci?5:3,0,2*Math.PI);
+                  ctx.fillStyle=PALETTE[ci]; ctx.fill();
+                }});
+              }});
+            }}
+            draw(null);
+
+            c.addEventListener("mousemove",e=>{{
+              const rect=c.getBoundingClientRect();
+              const mx=(e.clientX-rect.left)*(c.width/rect.width);
+              const my=(e.clientY-rect.top)*(c.height/rect.height);
+              let hit=null, best=Infinity;
+              PC.forEach((pts,ci)=>{{
+                pts.forEach((v,i)=>{{
+                  const d=Math.hypot(mx-axisX[i], my-yOf(v));
+                  if(d<best&&d<18){{ best=d; hit=ci; }}
+                }});
+              }});
+              if(hit!==null){{
+                draw(hit);
+                const row=PC[hit].map((v,i)=>`${{PC_C[i]}}: ${{v.toFixed(2)}}`).join(" · ");
+                showTip(e,`${{CL_NAMES[hit]}} — ${{row}}`);
+              }} else {{ draw(null); hideTip(); }}
+            }});
+            c.addEventListener("mouseleave",()=>{{ draw(null); hideTip(); }});
+          }})();
+
+          /* ════════ 4. CV% GROUPED BAR ════════ */
+          (function() {{
+            if (!CV.length || !CV_C.length) return;
+            const c = makeCard("c-cvbar", "Within-Cluster Spread  (CV%)");
+            const ctx = c.getContext("2d");
+            const W=c.width, H=c.height;
+            const PAD={{t:24,b:70,l:48,r:16}};
+            const nGroups=CV_C.length, nBars=K;
+            const gw=(W-PAD.l-PAD.r)/nGroups, bw=gw*0.72/nBars;
+            const maxVal=Math.max(50, ...CV.flat());
+
+            function yScale(v){{ return PAD.t+(H-PAD.t-PAD.b)*(1-v/maxVal); }}
+
+            function draw(hg,hb) {{
+              ctx.clearRect(0,0,W,H);
+              /* y axis */
+              [0,25,50].filter(v=>v<=maxVal+5).forEach(v=>{{
+                const y=yScale(v);
+                ctx.strokeStyle=BORDER; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+                ctx.beginPath(); ctx.moveTo(PAD.l,y); ctx.lineTo(W-PAD.r,y); ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.font="11px 'Segoe UI',sans-serif"; ctx.fillStyle=MUTED; ctx.textAlign="right";
+                ctx.fillText(v+"%",PAD.l-6,y+4);
+              }});
+              /* bars */
+              CV_C.forEach((col,gi)=>{{
+                const gx=PAD.l+gi*gw+gw*0.14;
+                CV.forEach((row,bi)=>{{
+                  const v=row[gi]||0;
+                  const x=gx+bi*bw;
+                  const y=yScale(v), barH=H-PAD.b-y;
+                  ctx.fillStyle=PALETTE[bi];
+                  ctx.globalAlpha=(hg===gi&&hb===bi)?1:(hg===gi||hg===-1)?0.8:0.3;
+                  ctx.beginPath();
+                  ctx.roundRect(x,y,bw-2,Math.max(barH,1),[3,3,0,0]);
+                  ctx.fill(); ctx.globalAlpha=1;
+                }});
+                /* col label */
+                ctx.font=FONT; ctx.fillStyle=MUTED; ctx.textAlign="center";
+                ctx.save(); ctx.translate(PAD.l+gi*gw+gw/2, H-PAD.b+14); ctx.rotate(-0.4); ctx.fillText(col,0,0); ctx.restore();
+              }});
+              /* legend */
+              CV.forEach((_,bi)=>{{
+                const lx=PAD.l+bi*90;
+                ctx.fillStyle=PALETTE[bi]; ctx.fillRect(lx,H-18,10,10);
+                ctx.font=FONT; ctx.fillStyle="#334155"; ctx.textAlign="left";
+                ctx.fillText(CL_NAMES[bi],lx+14,H-10);
+              }});
+            }}
+            draw(-1,-1);
+
+            c.addEventListener("mousemove",e=>{{
+              const rect=c.getBoundingClientRect();
+              const mx=(e.clientX-rect.left)*(c.width/rect.width);
+              const my=(e.clientY-rect.top)*(c.height/rect.height);
+              let hg=-1,hb=-1;
+              CV_C.forEach((col,gi)=>{{
+                const gx=PAD.l+gi*gw+gw*0.14;
+                CV.forEach((row,bi)=>{{
+                  const x=gx+bi*bw, v=row[gi]||0;
+                  const y=yScale(v), barH=H-PAD.b-y;
+                  if(mx>=x&&mx<=x+bw-2&&my>=y&&my<=y+barH){{ hg=gi;hb=bi; }}
+                }});
+              }});
+              if(hg>=0){{
+                draw(hg,hb);
+                showTip(e,`${{CL_NAMES[hb]}} · ${{CV_C[hg]}}: ${{(CV[hb][hg]||0).toFixed(1)}}% CV`);
+              }} else {{ draw(-1,-1); hideTip(); }}
+            }});
+            c.addEventListener("mouseleave",()=>{{ draw(-1,-1); hideTip(); }});
+          }})();
+
+          /* ════════ 5. SCATTER MATRIX ════════ */
+          (function() {{
+            if (!SC.length || SC_C.length<2) return;
+            const c = makeCard("c-scatter", "Scatter Matrix  (sample up to 300 pts/cluster)", true);
+            const ctx = c.getContext("2d");
+            const W=c.width, H=c.height;
+            const nDim=SC_C.length;
+            const PAD={{t:30,b:30,l:60,r:16}};
+            const cellW=(W-PAD.l-PAD.r)/nDim, cellH=(H-PAD.t-PAD.b)/nDim;
+
+            /* precompute global min/max per dim */
+            const mins=SC_C.map(()=>Infinity), maxs=SC_C.map(()=>-Infinity);
+            SC.forEach(clPts=>clPts.forEach(pt=>pt.forEach((v,d)=>{{ if(v<mins[d])mins[d]=v; if(v>maxs[d])maxs[d]=v; }})));
+            function scale(v,d,target){{ return mins[d]===maxs[d]?target/2:(v-mins[d])/(maxs[d]-mins[d])*target; }}
+
+            ctx.clearRect(0,0,W,H);
+            for(let r=0;r<nDim;r++){{
+              for(let col=0;col<nDim;col++){{
+                const ox=PAD.l+col*cellW, oy=PAD.t+r*cellH;
+                ctx.strokeStyle=BORDER; ctx.lineWidth=0.5;
+                ctx.strokeRect(ox,oy,cellW,cellH);
+                if(r===col){{
+                  ctx.font="bold 11px 'Segoe UI',sans-serif"; ctx.fillStyle="#334155";
+                  ctx.textAlign="center"; ctx.textBaseline="middle";
+                  ctx.fillText(SC_C[r],ox+cellW/2,oy+cellH/2);
+                }} else {{
+                  const PR=3,PD=4;
+                  SC.forEach((clPts,ci)=>{{
+                    ctx.fillStyle=rgba(PALETTE[ci],0.55);
+                    clPts.forEach(pt=>{{
+                      const x=ox+PR+scale(pt[col],col,cellW-PR*2);
+                      const y=oy+PR+((cellH-PR*2)-scale(pt[r],r,cellH-PR*2));
+                      ctx.beginPath(); ctx.arc(x,y,1.5,0,2*Math.PI); ctx.fill();
+                    }});
+                  }});
+                }}
+              }}
+            }}
+            /* axis labels */
+            SC_C.forEach((col,i)=>{{
+              ctx.font=FONT; ctx.fillStyle=MUTED; ctx.textAlign="center";
+              ctx.fillText(col, PAD.l+i*cellW+cellW/2, PAD.t-12);
+              ctx.save(); ctx.translate(PAD.l-36, PAD.t+i*cellH+cellH/2);
+              ctx.rotate(-Math.PI/2); ctx.fillText(col,0,0); ctx.restore();
+            }});
+          }})();
+
+          /* ════════ 6. STACKED BAR (string col) ════════ */
+          (function() {{
+            if (!STR_COL || !Object.keys(STR_BAR).length) return;
+            const cats=Object.keys(STR_BAR);
+            const c = makeCard("c-strbar", `Category Mix by Cluster  (${{STR_COL}})`);
+            const ctx = c.getContext("2d");
+            const W=c.width, H=c.height;
+            const PAD={{t:24,b:70,l:48,r:16}};
+            const bw=(W-PAD.l-PAD.r)/K*0.6, gap=(W-PAD.l-PAD.r)/K;
+            const catColors=["#6366f1","#f59e0b","#10b981","#ef4444","#8b5cf6","#06b6d4"];
+
+            function draw(hk) {{
+              ctx.clearRect(0,0,W,H);
+              const barH=H-PAD.t-PAD.b;
+              for(let ki=0;ki<K;ki++){{
+                const x=PAD.l+ki*gap+(gap-bw)/2;
+                let base=H-PAD.b;
+                cats.forEach((cat,ci)=>{{
+                  const pct=STR_BAR[cat][ki];
+                  const h=barH*pct/100;
+                  ctx.fillStyle=catColors[ci%catColors.length];
+                  ctx.globalAlpha=hk!==null&&hk!==ki?0.35:1;
+                  ctx.fillRect(x,base-h,bw,h);
+                  if(h>14){{
+                    ctx.font="bold 10px 'Segoe UI',sans-serif";
+                    ctx.fillStyle="#fff"; ctx.globalAlpha=1;
+                    ctx.textAlign="center"; ctx.textBaseline="middle";
+                    ctx.fillText(pct+"%",x+bw/2,base-h/2);
+                  }}
+                  base-=h;
+                }});
+                ctx.globalAlpha=1;
+                ctx.font=FONT; ctx.fillStyle=PALETTE[ki]; ctx.textAlign="center";
+                ctx.fillText(CL_NAMES[ki], x+bw/2, H-PAD.b+16);
+              }}
+              /* legend */
+              let lx=PAD.l;
+              cats.forEach((cat,ci)=>{{
+                ctx.fillStyle=catColors[ci%catColors.length]; ctx.fillRect(lx,H-18,10,10);
+                ctx.font=FONT; ctx.fillStyle="#334155"; ctx.textAlign="left";
+                ctx.fillText(cat,lx+14,H-10); lx+=ctx.measureText(cat).width+36;
+              }});
+            }}
+            draw(null);
+
+            c.addEventListener("mousemove",e=>{{
+              const rect=c.getBoundingClientRect();
+              const mx=(e.clientX-rect.left)*(c.width/rect.width);
+              let hk=null;
+              for(let ki=0;ki<K;ki++){{
+                const x=PAD.l+ki*gap+(gap-bw)/2;
+                if(mx>=x&&mx<=x+bw) hk=ki;
+              }}
+              if(hk!==null){{
+                draw(hk);
+                const rows=cats.map(cat=>`${{cat}}: ${{STR_BAR[cat][hk]}}%`).join(" · ");
+                showTip(e,`${{CL_NAMES[hk]}} — ${{rows}}`);
+              }} else {{ draw(null); hideTip(); }}
+            }});
+            c.addEventListener("mouseleave",()=>{{ draw(null); hideTip(); }});
+          }})();
+
+        }})();
+        </script>""")
+
     # ── Render full page ───────────────────────────────────────────────────────
     def render(self) -> str:
         ts         = datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -1347,6 +1888,37 @@ class HtmlReport:
   }}
   .disp-profile h3 {{ color: #94a3b8; }}
 
+  /* ── Plot grid ── */
+  .plot-grid {{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }}
+  .plot-card {{
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px 12px;
+    min-width: 0;
+  }}
+  .plot-wide {{
+    grid-column: 1 / -1;
+  }}
+  .plot-title {{
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }}
+  .plot-card canvas {{
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+  }}
+
   /* ── Print ── */
   @media print {{
     body {{ background: white; }}
@@ -1527,6 +2099,7 @@ def main() -> None:
         report.add_means_table(num_means, str_modes)
         report.add_cv_table(num_cvs, str_uniques)
         report.add_string_profiles(df_original, labels)
+        report.add_plots(df_original, labels, num_means, num_cvs, sizes)
         report.add_performance(inertia, sil, db, km.n_iter_)
 
     # ── Terminal output ──
