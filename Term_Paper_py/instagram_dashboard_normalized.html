@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Indian D2C SME — Follower-Normalized Engagement Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07080d;
+    --surface: #0f1018;
+    --surface2: #171822;
+    --border: #1e2030;
+    --accent1: #e8ff5a;   /* electric yellow-green */
+    --accent2: #5a9eff;   /* sky blue */
+    --accent3: #ff5a8a;   /* coral pink */
+    --accent4: #5affdc;   /* teal */
+    --accent5: #c45aff;   /* violet */
+    --text: #dde0f0;
+    --muted: #555875;
+    --muted2: #3a3d55;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* subtle scanline texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(255,255,255,0.012) 3px,
+      rgba(255,255,255,0.012) 4px
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 1480px;
+    margin: 0 auto;
+    padding: 40px 32px;
+  }
+
+  /* ── HEADER ───────────────────────────────────── */
+  header {
+    margin-bottom: 44px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .badge-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+
+  .badge {
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 2px;
+  }
+
+  .badge-green { color: var(--accent1); border: 1px solid var(--accent1); }
+  .badge-blue  { color: var(--accent2); border: 1px solid var(--accent2); }
+  .badge-pink  { color: var(--accent3); border: 1px solid var(--accent3); }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(26px, 3.5vw, 50px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    color: #fff;
+  }
+
+  h1 span { color: var(--accent1); }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 10px;
+    letter-spacing: 0.04em;
+    line-height: 1.6;
+    max-width: 540px;
+  }
+
+  .meta-chips {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 22px;
+  }
+
+  .chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: 3px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .chip em { color: var(--text); font-style: normal; margin-left: 4px; }
+
+  .note-box {
+    background: rgba(232,255,90,0.04);
+    border: 1px solid rgba(232,255,90,0.18);
+    border-left: 3px solid var(--accent1);
+    padding: 12px 16px;
+    border-radius: 3px;
+    font-size: 11px;
+    color: rgba(232,255,90,0.75);
+    line-height: 1.6;
+    max-width: 380px;
+    margin-top: 10px;
+  }
+
+  /* ── SECTION LABELS ───────────────────────────── */
+  .section-label {
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── KPI STRIP ────────────────────────────────── */
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+    gap: 12px;
+    margin-bottom: 30px;
+  }
+
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px 20px 18px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .kpi::after {
+    content: '';
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 56px; height: 56px;
+    border-radius: 56px 0 0 0;
+  }
+
+  .kpi:nth-child(1)::after { background: rgba(232,255,90,0.07); }
+  .kpi:nth-child(2)::after { background: rgba(90,158,255,0.07); }
+  .kpi:nth-child(3)::after { background: rgba(255,90,138,0.07); }
+  .kpi:nth-child(4)::after { background: rgba(90,255,220,0.07); }
+  .kpi:nth-child(5)::after { background: rgba(196,90,255,0.07); }
+  .kpi:nth-child(6)::after { background: rgba(232,255,90,0.07); }
+
+  .kpi-top {
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .kpi-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+
+  .kpi-sub { font-size: 10px; color: var(--muted); margin-top: 7px; line-height: 1.4; }
+
+  /* ── PANELS ───────────────────────────────────── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .grid-full { margin-bottom: 16px; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px 26px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .panel-head { margin-bottom: 18px; }
+
+  .panel-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+
+  .panel-desc { font-size: 11px; color: var(--muted); line-height: 1.55; }
+
+  .panel-accent { color: var(--accent1); }
+
+  /* ── SCATTER / BUBBLE CUSTOM ──────────────────── */
+  .chart-wrap { position: relative; }
+
+  /* ── RANK TABLE ───────────────────────────────── */
+  .rank-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+
+  .rank-table th {
+    text-align: left;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .rank-table td {
+    padding: 10px 10px;
+    border-bottom: 1px solid rgba(30,32,48,0.6);
+    vertical-align: middle;
+  }
+
+  .rank-table tr:last-child td { border-bottom: none; }
+  .rank-table tr:hover td { background: rgba(232,255,90,0.02); }
+
+  .rank-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    width: 22px;
+    display: inline-block;
+  }
+
+  .rank-num.gold   { color: #ffd166; }
+  .rank-num.silver { color: #c0c0c0; }
+  .rank-num.bronze { color: #cd7f32; }
+
+  .er-bar-wrap { min-width: 100px; }
+
+  .er-bar {
+    height: 4px;
+    border-radius: 2px;
+    margin-top: 4px;
+  }
+
+  .delta-up   { color: var(--accent4); font-size: 10px; }
+  .delta-down { color: var(--accent3); font-size: 10px; }
+  .delta-same { color: var(--muted);   font-size: 10px; }
+
+  /* ── INSIGHT CARDS ────────────────────────────── */
+  .insight-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+    gap: 14px;
+    margin-bottom: 30px;
+  }
+
+  .insight {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 22px 22px 20px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.7s ease both;
+  }
+
+  .insight-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .insight-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+    letter-spacing: 0.01em;
+  }
+
+  .insight-body {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  .insight-body strong { color: var(--text); }
+
+  .insight::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .insight:nth-child(1)::before { background: var(--accent1); }
+  .insight:nth-child(2)::before { background: var(--accent2); }
+  .insight:nth-child(3)::before { background: var(--accent3); }
+  .insight:nth-child(4)::before { background: var(--accent4); }
+  .insight:nth-child(5)::before { background: var(--accent5); }
+  .insight:nth-child(6)::before { background: var(--accent1); }
+
+  /* ── FOOTER ───────────────────────────────────── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding-top: 22px;
+    margin-top: 44px;
+    font-size: 10px;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 980px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-row">
+      <div>
+        <div class="badge-row">
+          <span class="badge badge-green">Follower-Normalized</span>
+          <span class="badge badge-blue">SMDA Term Paper · 2026</span>
+          <span class="badge badge-pink">n = 2,128 Posts · 18 Brands</span>
+        </div>
+        <h1>Indian D2C SME<br>Instagram — <span>Engagement Rate</span> Analysis</h1>
+        <p class="subtitle">All engagement metrics scaled by each brand's follower count. Raw likes and views are replaced by engagement rate (%) to fairly compare brands of different audience sizes.</p>
+        <div class="meta-chips">
+          <div class="chip">Metric <em>ER = (Likes+Comments) / Followers × 100</em></div>
+          <div class="chip">Period <em>Mar 2025 – Feb 2026</em></div>
+          <div class="chip">Categories <em>8</em></div>
+        </div>
+      </div>
+      <div class="note-box">
+        ⚠️ Raw likes rankings change significantly after normalization.<br><br>
+        Suta Bombay (804K followers, 0.02% ER) and MyBlissClub (418K followers, 0.04% ER) collapse to the bottom. Sirona Hygiene (140K, 5.76% ER) surges to #2 despite a small follower base.
+      </div>
+    </div>
+  </header>
+
+  <!-- KPI STRIP -->
+  <div class="kpi-strip">
+    <div class="kpi">
+      <div class="kpi-top">Median ER across all posts</div>
+      <div class="kpi-val" style="color:var(--accent1)">0.11%</div>
+      <div class="kpi-sub">Mean ER is 1.36%<br>(skewed by Mokobara)</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top">Highest brand ER</div>
+      <div class="kpi-val" style="color:var(--accent2)">19.5%</div>
+      <div class="kpi-sub">Mokobara · 502K followers<br>driven by viral Reels</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top">2nd highest brand ER</div>
+      <div class="kpi-val" style="color:var(--accent4)">5.76%</div>
+      <div class="kpi-sub">Sirona Hygiene · 140K followers<br>efficient micro-audience</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top">Video avg ER</div>
+      <div class="kpi-val" style="color:var(--accent3)">2.12%</div>
+      <div class="kpi-sub">vs Image 0.89% · Sidecar 0.56%<br>3.8× advantage over Sidecar</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top">Best hashtag count ER</div>
+      <div class="kpi-val" style="color:var(--accent5)">4.73%</div>
+      <div class="kpi-sub">1–2 hashtags · vs 0.55%<br>for zero-hashtag posts</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top">Best day avg ER</div>
+      <div class="kpi-val" style="color:var(--accent1)">2.99%</div>
+      <div class="kpi-sub">Tuesday · vs 0.56% Monday<br>5.3× weekly swing</div>
+    </div>
+  </div>
+
+  <!-- SECTION 01: BRAND ER RANKINGS -->
+  <div class="section-label">01 — Brand Engagement Rate Rankings (Follower-Normalized)</div>
+
+  <div class="grid-2" style="margin-bottom:16px;">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Average Engagement Rate by Brand</div>
+        <div class="panel-desc">Rankings flip dramatically vs raw likes. <span class="panel-accent">Sirona Hygiene jumps from #3 → #2</span>; The Souled Store drops from #2 → #9.</div>
+      </div>
+      <div class="chart-wrap" style="height:380px">
+        <canvas id="erByBrand"></canvas>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Raw Likes Rank vs Normalized ER Rank</div>
+        <div class="panel-desc">Shows which brands over- or under-perform relative to their audience size. Above the diagonal = more efficient than raw rank suggests.</div>
+      </div>
+      <div class="chart-wrap" style="height:380px">
+        <canvas id="rankShift"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Follower vs ER scatter -->
+  <div class="grid-full">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Followers vs Avg Engagement Rate — Inverse Relationship</div>
+        <div class="panel-desc">Larger follower bases tend to have lower ER — audience saturation effect. Smaller brands with tight, niche communities (Sirona, Bombay Shirts) punch above their weight.</div>
+      </div>
+      <div class="chart-wrap" style="height:280px">
+        <canvas id="scatterER"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- FULL BRAND TABLE -->
+  <div class="grid-full">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Full Brand Performance Table — Normalized View</div>
+        <div class="panel-desc">Ranked by avg engagement rate. △ Raw Rank shows change from raw-likes ranking. Green = improved, Red = dropped after normalization.</div>
+      </div>
+      <table class="rank-table">
+        <thead>
+          <tr>
+            <th>ER Rank</th>
+            <th>Brand</th>
+            <th>Category</th>
+            <th>Followers</th>
+            <th>Posts</th>
+            <th>Avg Likes</th>
+            <th>Avg ER %</th>
+            <th>△ Raw→ER Rank</th>
+            <th>Relative ER</th>
+          </tr>
+        </thead>
+        <tbody id="brandTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SECTION 02: CONTENT TYPE -->
+  <div class="section-label" style="margin-top:28px;">02 — Content Type · Follower-Normalized</div>
+  <div class="grid-3">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Avg ER by Content Type</div>
+        <div class="panel-desc">Video still leads, but the gap vs Image narrows when normalised</div>
+      </div>
+      <div class="chart-wrap" style="height:220px">
+        <canvas id="ctypeER"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Avg ER by Day of Week</div>
+        <div class="panel-desc">Tue & Wed remain standout posting days even after normalization</div>
+      </div>
+      <div class="chart-wrap" style="height:220px">
+        <canvas id="dayER"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Post Volume vs Avg ER</div>
+        <div class="panel-desc">High frequency does not guarantee high ER — Sirona posts 131× with strong returns</div>
+      </div>
+      <div class="chart-wrap" style="height:220px">
+        <canvas id="volVsER"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 03: CONTENT CHARACTERISTICS -->
+  <div class="section-label">03 — Content Characteristics vs Engagement Rate</div>
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Avg ER by Caption Length Bucket</div>
+        <div class="panel-desc">The U-curve intensifies after normalization — 800+ char captions deliver <span class="panel-accent">8% ER</span>, suggesting deep storytelling drives disproportionate community interaction</div>
+      </div>
+      <div class="chart-wrap" style="height:240px">
+        <canvas id="captionER"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Avg ER by Hashtag Count</div>
+        <div class="panel-desc">1–2 hashtags produce <span class="panel-accent">4.73% avg ER</span> — the targeted hashtag effect holds strongly even after follower normalization</div>
+      </div>
+      <div class="chart-wrap" style="height:240px">
+        <canvas id="hashtagER"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 04: KEY INSIGHTS -->
+  <div class="section-label" style="margin-top:28px;">04 — Key Insights After Normalization</div>
+  <div class="insight-grid">
+    <div class="insight">
+      <div class="insight-num" style="color:var(--accent1)">19.5%</div>
+      <div class="insight-title">Mokobara's ER Is Truly Viral-Class</div>
+      <div class="insight-body">With a 19.5% avg engagement rate against 502K followers, Mokobara's content is extraordinary by any standard. This isn't just a large-follower advantage — it reflects viral Reels with outsized community response. Brands should study their content format and creative strategy.</div>
+    </div>
+    <div class="insight">
+      <div class="insight-num" style="color:var(--accent2)">↑ #3→#2</div>
+      <div class="insight-title">Sirona Hygiene: Niche Efficiency Champion</div>
+      <div class="insight-body">Sirona's 5.76% ER on a modest 140K audience reveals how <strong>tight, cause-driven communities</strong> (period & intimate hygiene for vulva owners) massively outperform on proportional engagement. Small audience, high conviction.</div>
+    </div>
+    <div class="insight">
+      <div class="insight-num" style="color:var(--accent3)">↓ #2→#9</div>
+      <div class="insight-title">The Souled Store: Follower Base Outgrown Its Content</div>
+      <div class="insight-body">2M followers but just 0.54% ER — its raw #2 ranking (10,754 avg likes) was misleading. Audience may be stale or content-product fit is weaker. Reducing posting frequency and lifting creative quality could recover ER.</div>
+    </div>
+    <div class="insight">
+      <div class="insight-num" style="color:var(--accent4)">8.0%</div>
+      <div class="insight-title">Long Captions (800+ chars) Maximize ER</div>
+      <div class="insight-body">After normalization, posts with 800+ character captions deliver an <strong>8.0% avg ER</strong> — far above any other bucket. Long-form storytelling creates deeper engagement loops; SMEs should test narrative-style captions for their highest-potential content.</div>
+    </div>
+    <div class="insight">
+      <div class="insight-num" style="color:var(--accent5)">4.73%</div>
+      <div class="insight-title">The 1–2 Hashtag Signal Holds Firm</div>
+      <div class="insight-body">Using just 1–2 targeted hashtags yields 4.73% ER — versus 0.55% for zero hashtags. This is an 8.6× multiplier for a trivial change in execution. Hashtag strategy is one of the highest-leverage, lowest-cost optimizations available to D2C SMEs.</div>
+    </div>
+    <div class="insight">
+      <div class="insight-num" style="color:var(--accent1)">2.99%</div>
+      <div class="insight-title">Tuesday Posts: 5.3× Better Than Monday</div>
+      <div class="insight-body">Tuesday sees 2.99% avg ER vs Monday's 0.56% — a <strong>5.3× swing</strong> for the same content. Wednesday (2.73%) is similarly strong. Simply shifting publishing schedules mid-week, at zero cost, is a direct ER lever for resource-constrained SMEs.</div>
+    </div>
+  </div>
+
+  <footer>
+    <span>Shaurya Baveja (PGPXC202500124) · Pratyush Bharati (PGPXC202500097) · SMDA Term Paper · IIM 2026</span>
+    <span>Follower counts sourced from Instagram · Feb 2026 · ER = (Likes + Comments) / Followers × 100</span>
+  </footer>
+</div>
+
+<script>
+  // ── BRAND DATA (ER-ranked) ─────────────────────────────────────────────
+  const brands = [
+    { un:'mokobara',            label:'Mokobara',             cat:'Lifestyle/Travel',  followers:502000,   posts:66,  avgLikes:97655, avgER:19.475, rawRank:1  },
+    { un:'sironahygiene',       label:'Sirona Hygiene',        cat:'Health/Hygiene',    followers:140000,   posts:131, avgLikes:7973,  avgER:5.758,  rawRank:3  },
+    { un:'beminimalist__',      label:'Be Minimalist',         cat:'Beauty',            followers:423000,   posts:83,  avgLikes:4936,  avgER:1.195,  rawRank:5  },
+    { un:'bombayshirts',        label:'Bombay Shirt Co.',      cat:'Fashion',           followers:168000,   posts:156, avgLikes:1592,  avgER:0.950,  rawRank:10 },
+    { un:'mcaffeineofficial',   label:'mCaffeine',             cat:'Beauty',            followers:644000,   posts:171, avgLikes:5503,  avgER:0.885,  rawRank:4  },
+    { un:'foxtaleskin',         label:'Foxtale Skin',          cat:'Beauty',            followers:450000,   posts:149, avgLikes:3579,  avgER:0.841,  rawRank:7  },
+    { un:'insightcosmetic',     label:'Insight Cosmetic',      cat:'Beauty',            followers:575000,   posts:185, avgLikes:4370,  avgER:0.771,  rawRank:6  },
+    { un:'thewholetruthfoods',  label:'The Whole Truth Foods', cat:'Food/Health',       followers:344000,   posts:82,  avgLikes:2163,  avgER:0.653,  rawRank:9  },
+    { un:'thesouledstore',      label:'The Souled Store',      cat:'Fashion',           followers:2000000,  posts:194, avgLikes:10754, avgER:0.543,  rawRank:2  },
+    { un:'bira91beer',          label:'Bira 91',               cat:'Beverages',         followers:105000,   posts:158, avgLikes:485,   avgER:0.469,  rawRank:13 },
+    { un:'sleepyowlcoffee',     label:'Sleepy Owl Coffee',     cat:'Beverages',         followers:87000,    posts:31,  avgLikes:328,   avgER:0.389,  rawRank:14 },
+    { un:'jimmysbeverages',     label:"Jimmy's Beverages",     cat:'Beverages',         followers:55000,    posts:153, avgLikes:206,   avgER:0.380,  rawRank:16 },
+    { un:'bombayshavingcompany',label:'Bombay Shaving Co.',    cat:'Personal Care',     followers:231000,   posts:154, avgLikes:595,   avgER:0.267,  rawRank:12 },
+    { un:'plumgoodness',        label:'Plum Goodness',         cat:'Beauty',            followers:1000000,  posts:166, avgLikes:2578,  avgER:0.266,  rawRank:8  },
+    { un:'wakefitco',           label:'Wakefit',               cat:'Lifestyle/Home',    followers:175000,   posts:11,  avgLikes:216,   avgER:0.137,  rawRank:15 },
+    { un:'indya',               label:'Indya',                 cat:'Fashion',           followers:550000,   posts:124, avgLikes:741,   avgER:0.136,  rawRank:11 },
+    { un:'myblissclub',         label:'My Bliss Club',         cat:'Beauty',            followers:418000,   posts:107, avgLikes:136,   avgER:0.037,  rawRank:17 },
+    { un:'suta_bombay',         label:'Suta Bombay',           cat:'Fashion',           followers:804000,   posts:7,   avgLikes:164,   avgER:0.022,  rawRank:18 },
+  ];
+
+  const CAT_COLORS = {
+    'Lifestyle/Travel':'#e8ff5a','Health/Hygiene':'#5affdc','Fashion':'#5a9eff',
+    'Beauty':'#ff5a8a','Food/Health':'#ffd166','Personal Care':'#66d9e8',
+    'Beverages':'#c45aff','Lifestyle/Home':'#ff9c5a',
+  };
+
+  Chart.defaults.color = '#555875';
+  Chart.defaults.borderColor = '#1e2030';
+  Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+  Chart.defaults.font.size = 11;
+
+  const noGrid = { display: false };
+  const gridLine = { color: 'rgba(30,32,48,0.8)' };
+
+  // ── 1. ER BY BRAND (horizontal bar) ──────────────────────────────────
+  new Chart(document.getElementById('erByBrand'), {
+    type: 'bar',
+    data: {
+      labels: brands.map(b => b.label),
+      datasets: [{
+        label: 'Avg ER %',
+        data: brands.map(b => b.avgER),
+        backgroundColor: brands.map(b => CAT_COLORS[b.cat] + 'cc'),
+        borderColor: brands.map(b => CAT_COLORS[b.cat]),
+        borderWidth: 1,
+        borderRadius: 2,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: c => ' ' + c.raw.toFixed(3) + '% avg ER' } }
+      },
+      scales: {
+        x: { grid: gridLine, ticks: { callback: v => v.toFixed(1) + '%' } },
+        y: { grid: noGrid, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+
+  // ── 2. RANK SHIFT (scatter) ───────────────────────────────────────────
+  const rankShiftData = brands.map((b, i) => ({
+    x: b.rawRank,   // raw likes rank
+    y: i + 1,       // ER rank
+    label: b.label,
+    color: b.rawRank === (i+1) ? '#555875' : (b.rawRank > (i+1) ? '#5affdc' : '#ff5a8a'),
+  }));
+
+  new Chart(document.getElementById('rankShift'), {
+    type: 'scatter',
+    data: {
+      datasets: [
+        {
+          label: 'Diagonal',
+          data: [{x:1,y:1},{x:18,y:18}],
+          type: 'line',
+          borderColor: 'rgba(255,255,255,0.08)',
+          borderDash: [4,4],
+          pointRadius: 0,
+          fill: false,
+        },
+        {
+          label: 'Brands',
+          data: rankShiftData,
+          backgroundColor: rankShiftData.map(d => d.color + 'cc'),
+          borderColor: rankShiftData.map(d => d.color),
+          pointRadius: 7,
+          pointHoverRadius: 9,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              if (ctx.datasetIndex === 0) return '';
+              const d = rankShiftData[ctx.dataIndex];
+              const shift = d.x - ctx.parsed.y;
+              const arrow = shift > 0 ? '▲' : shift < 0 ? '▼' : '—';
+              return [`${d.label}`, `Raw rank: ${d.x}  →  ER rank: ${ctx.parsed.y}`, `${arrow} ${Math.abs(shift)} positions`];
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: gridLine,
+          title: { display: true, text: 'Raw Likes Rank (#1 = best)', font: { size: 10 } },
+          min: 0, max: 19,
+          ticks: { callback: v => '#' + v }
+        },
+        y: {
+          grid: gridLine,
+          title: { display: true, text: 'ER Rank (#1 = best)', font: { size: 10 } },
+          min: 0, max: 19,
+          reverse: true,
+          ticks: { callback: v => '#' + v }
+        }
+      }
+    }
+  });
+
+  // ── 3. SCATTER: Followers vs ER ──────────────────────────────────────
+  new Chart(document.getElementById('scatterER'), {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        data: brands.map(b => ({ x: b.followers / 1000, y: b.avgER, label: b.label })),
+        backgroundColor: brands.map(b => CAT_COLORS[b.cat] + 'bb'),
+        borderColor: brands.map(b => CAT_COLORS[b.cat]),
+        pointRadius: 8,
+        pointHoverRadius: 10,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const d = ctx.raw;
+              return [`${brands[ctx.dataIndex].label}`, `${(d.x).toFixed(0)}K followers  |  ${d.y.toFixed(3)}% ER`];
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: gridLine, title: { display: true, text: 'Followers (thousands)', font: { size: 10 } }, ticks: { callback: v => v + 'K' } },
+        y: { grid: gridLine, title: { display: true, text: 'Avg Engagement Rate (%)', font: { size: 10 } }, ticks: { callback: v => v + '%' } }
+      }
+    }
+  });
+
+  // ── 4. CONTENT TYPE ER ───────────────────────────────────────────────
+  new Chart(document.getElementById('ctypeER'), {
+    type: 'bar',
+    data: {
+      labels: ['Image', 'Sidecar', 'Video'],
+      datasets: [{
+        data: [0.888, 0.561, 2.118],
+        backgroundColor: ['rgba(255,90,138,0.7)', 'rgba(90,158,255,0.5)', 'rgba(232,255,90,0.8)'],
+        borderColor: ['#ff5a8a','#5a9eff','#e8ff5a'],
+        borderWidth: 1, borderRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: noGrid },
+        y: { grid: gridLine, ticks: { callback: v => v + '%' } }
+      }
+    }
+  });
+
+  // ── 5. DAY OF WEEK ER ─────────────────────────────────────────────────
+  const dayER = [0.562, 2.993, 2.730, 1.066, 0.877, 0.713, 0.662];
+  new Chart(document.getElementById('dayER'), {
+    type: 'bar',
+    data: {
+      labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      datasets: [{
+        data: dayER,
+        backgroundColor: dayER.map(v => v > 2 ? 'rgba(232,255,90,0.8)' : v > 0.9 ? 'rgba(90,255,220,0.6)' : 'rgba(90,158,255,0.35)'),
+        borderColor:     dayER.map(v => v > 2 ? '#e8ff5a' : v > 0.9 ? '#5affdc' : '#5a9eff'),
+        borderWidth: 1, borderRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: noGrid },
+        y: { grid: gridLine, ticks: { callback: v => v.toFixed(1) + '%' } }
+      }
+    }
+  });
+
+  // ── 6. POST VOLUME vs ER ─────────────────────────────────────────────
+  new Chart(document.getElementById('volVsER'), {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        data: brands.map(b => ({ x: b.posts, y: b.avgER })),
+        backgroundColor: brands.map(b => CAT_COLORS[b.cat] + 'bb'),
+        borderColor: brands.map(b => CAT_COLORS[b.cat]),
+        pointRadius: 6,
+        pointHoverRadius: 8,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `${brands[ctx.dataIndex].label}: ${ctx.raw.x} posts, ${ctx.raw.y.toFixed(3)}% ER` } }
+      },
+      scales: {
+        x: { grid: gridLine, title: { display: true, text: 'Posts in Dataset', font: { size: 10 } } },
+        y: { grid: gridLine, ticks: { callback: v => v.toFixed(1) + '%' } }
+      }
+    }
+  });
+
+  // ── 7. CAPTION LENGTH ER ─────────────────────────────────────────────
+  const capER = [2.043, 0.550, 0.560, 0.904, 8.019];
+  new Chart(document.getElementById('captionER'), {
+    type: 'bar',
+    data: {
+      labels: ['0–100', '100–200', '200–400', '400–800', '800+'],
+      datasets: [{
+        data: capER,
+        backgroundColor: ['rgba(90,255,220,0.6)', 'rgba(90,158,255,0.35)', 'rgba(90,158,255,0.3)', 'rgba(90,158,255,0.4)', 'rgba(232,255,90,0.85)'],
+        borderColor:     ['#5affdc', '#5a9eff', '#5a9eff', '#5a9eff', '#e8ff5a'],
+        borderWidth: 1, borderRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: noGrid, title: { display: true, text: 'Caption length (chars)', font: { size: 10 } } },
+        y: { grid: gridLine, ticks: { callback: v => v.toFixed(1) + '%' } }
+      }
+    }
+  });
+
+  // ── 8. HASHTAG ER ────────────────────────────────────────────────────
+  const htER = [0.547, 4.726, 0.972, 1.097];
+  new Chart(document.getElementById('hashtagER'), {
+    type: 'bar',
+    data: {
+      labels: ['0', '1–2', '3–5', '6–10'],
+      datasets: [{
+        data: htER,
+        backgroundColor: ['rgba(90,158,255,0.35)', 'rgba(232,255,90,0.85)', 'rgba(90,158,255,0.4)', 'rgba(90,158,255,0.4)'],
+        borderColor:     ['#5a9eff', '#e8ff5a', '#5a9eff', '#5a9eff'],
+        borderWidth: 1, borderRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: noGrid, title: { display: true, text: 'Hashtag count', font: { size: 10 } } },
+        y: { grid: gridLine, ticks: { callback: v => v.toFixed(1) + '%' } }
+      }
+    }
+  });
+
+  // ── BRAND TABLE ───────────────────────────────────────────────────────
+  const maxER = brands[0].avgER;
+  const tbody = document.getElementById('brandTbody');
+
+  brands.forEach((b, i) => {
+    const erRank   = i + 1;
+    const rankDiff = b.rawRank - erRank;   // positive = improved (raw was worse)
+    const pct      = (b.avgER / maxER * 100).toFixed(1);
+    const color    = CAT_COLORS[b.cat];
+
+    let rankClass, rankNum;
+    if (erRank === 1) { rankClass = 'gold'; rankNum = '1'; }
+    else if (erRank === 2) { rankClass = 'silver'; rankNum = '2'; }
+    else if (erRank === 3) { rankClass = 'bronze'; rankNum = '3'; }
+    else { rankClass = ''; rankNum = erRank; }
+
+    let deltaStr;
+    if (rankDiff > 0)      deltaStr = `<span class="delta-up">▲ +${rankDiff}</span>`;
+    else if (rankDiff < 0) deltaStr = `<span class="delta-down">▼ ${rankDiff}</span>`;
+    else                   deltaStr = `<span class="delta-same">—</span>`;
+
+    tbody.innerHTML += `
+      <tr>
+        <td><span class="rank-num ${rankClass}">#${rankNum}</span></td>
+        <td style="font-weight:500;color:#dde0f0">${b.label}</td>
+        <td style="color:${color};font-size:10px">${b.cat}</td>
+        <td style="color:var(--muted)">${(b.followers/1000).toFixed(0)}K</td>
+        <td style="color:var(--muted)">${b.posts}</td>
+        <td>${b.avgLikes.toLocaleString()}</td>
+        <td style="color:${color};font-weight:600">${b.avgER.toFixed(3)}%</td>
+        <td>${deltaStr}</td>
+        <td class="er-bar-wrap">
+          <div style="font-size:9px;color:var(--muted)">${pct}%</div>
+          <div class="er-bar" style="width:${pct}%;background:${color};max-width:100%"></div>
+        </td>
+      </tr>`;
+  });
+</script>
+</body>
+</html>

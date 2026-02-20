@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Indian D2C SME — Instagram Analytics Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3d;
+    --accent1: #ff6b35;
+    --accent2: #7c5cfc;
+    --accent3: #00d4aa;
+    --accent4: #ffd166;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --danger: #ff4d6d;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(124,92,252,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,92,252,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 40px 32px;
+  }
+
+  /* Header */
+  header {
+    margin-bottom: 48px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 32px;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .badge {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent3);
+    border: 1px solid var(--accent3);
+    padding: 4px 12px;
+    border-radius: 2px;
+    margin-bottom: 12px;
+    display: inline-block;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px, 4vw, 52px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, #fff 30%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 10px;
+    letter-spacing: 0.05em;
+  }
+
+  .meta-pills {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+
+  .pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .pill span { color: var(--text); margin-left: 4px; }
+
+  /* KPI Row */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .kpi-card:nth-child(1)::before { background: var(--accent1); }
+  .kpi-card:nth-child(2)::before { background: var(--accent2); }
+  .kpi-card:nth-child(3)::before { background: var(--accent3); }
+  .kpi-card:nth-child(4)::before { background: var(--accent4); }
+  .kpi-card:nth-child(5)::before { background: var(--danger); }
+  .kpi-card:nth-child(6)::before { background: #66d9e8; }
+
+  .kpi-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .kpi-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .kpi-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  /* Section Labels */
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Chart Panels */
+  .chart-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .chart-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .chart-grid-full {
+    margin-bottom: 20px;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 28px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .panel-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+  }
+
+  .panel-desc {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 22px;
+    line-height: 1.5;
+  }
+
+  .chart-wrap {
+    position: relative;
+  }
+
+  /* Brand table */
+  .brand-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  .brand-table th {
+    text-align: left;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brand-table td {
+    padding: 11px 8px;
+    border-bottom: 1px solid rgba(42,42,61,0.4);
+    vertical-align: middle;
+  }
+
+  .brand-table tr:last-child td { border-bottom: none; }
+
+  .brand-table tr:hover td { background: rgba(124,92,252,0.04); }
+
+  .bar-mini {
+    height: 4px;
+    border-radius: 2px;
+    margin-top: 4px;
+  }
+
+  .rank-badge {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    width: 20px;
+  }
+
+  .rank-badge.top { color: var(--accent4); }
+
+  /* Insight Cards */
+  .insights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .insight-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 22px 24px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.7s ease both;
+  }
+
+  .insight-icon {
+    font-size: 22px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .insight-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  .insight-body {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  .insight-body strong { color: var(--accent3); }
+
+  .insight-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 60px; height: 60px;
+    border-radius: 60px 0 0 0;
+    opacity: 0.06;
+  }
+
+  .insight-card:nth-child(1)::after { background: var(--accent1); }
+  .insight-card:nth-child(2)::after { background: var(--accent2); }
+  .insight-card:nth-child(3)::after { background: var(--accent3); }
+  .insight-card:nth-child(4)::after { background: var(--accent4); }
+  .insight-card:nth-child(5)::after { background: var(--danger); }
+  .insight-card:nth-child(6)::after { background: #66d9e8; }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+    margin-top: 48px;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 900px) {
+    .chart-grid-2, .chart-grid-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-top">
+      <div>
+        <div class="badge">SMDA Term Paper · IIM · 2026</div>
+        <h1>Indian D2C SME<br>Instagram Analytics</h1>
+        <p class="subtitle">Social Media Virality Study — Descriptive Statistics Dashboard</p>
+      </div>
+    </div>
+    <div class="meta-pills">
+      <div class="pill">Total Posts <span>2,128</span></div>
+      <div class="pill">Brands <span>18</span></div>
+      <div class="pill">Date Range <span>Mar 2025 – Feb 2026</span></div>
+      <div class="pill">Categories <span>8</span></div>
+      <div class="pill">Content Types <span>Video · Sidecar · Image</span></div>
+    </div>
+  </header>
+
+  <!-- KPI ROW -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Likes</div>
+      <div class="kpi-value" style="color: var(--accent1)">13.4M</div>
+      <div class="kpi-sub">Across all posts & brands</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Avg Likes / Post</div>
+      <div class="kpi-value" style="color: var(--accent2)">6,317</div>
+      <div class="kpi-sub">Median: 398 (heavy skew)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Total Comments</div>
+      <div class="kpi-value" style="color: var(--accent3)">152K</div>
+      <div class="kpi-sub">Avg 71 per post</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Avg Caption Length</div>
+      <div class="kpi-value" style="color: var(--accent4)">339</div>
+      <div class="kpi-sub">Characters · Range 11–2158</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Avg Hashtags</div>
+      <div class="kpi-value" style="color: var(--danger)">2.1</div>
+      <div class="kpi-sub">57.7% of posts use 0</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Video Share</div>
+      <div class="kpi-value" style="color: #66d9e8">54.4%</div>
+      <div class="kpi-sub">Reels dominant content type</div>
+    </div>
+  </div>
+
+  <!-- BRAND PERFORMANCE -->
+  <div class="section-label">01 — Brand Performance</div>
+  <div class="chart-grid-2" style="margin-bottom: 20px;">
+
+    <div class="panel">
+      <div class="panel-title">Average Likes per Post by Brand</div>
+      <div class="panel-desc">Mokobara is a significant outlier; median vs mean gap reveals extreme right-skew</div>
+      <div class="chart-wrap" style="height:320px">
+        <canvas id="brandLikes"></canvas>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Post Volume by Brand</div>
+      <div class="panel-desc">The Souled Store and Insight Cosmetic lead in posting frequency</div>
+      <div class="chart-wrap" style="height:320px">
+        <canvas id="brandVolume"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENT TYPE & CATEGORY -->
+  <div class="chart-grid-3" style="margin-bottom: 20px;">
+    <div class="panel">
+      <div class="panel-title">Avg Likes by Content Type</div>
+      <div class="panel-desc">Video outperforms other formats significantly</div>
+      <div class="chart-wrap" style="height:240px">
+        <canvas id="contentType"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Post Mix by Content Type</div>
+      <div class="panel-desc">2,128 posts across Video, Sidecar & Image</div>
+      <div class="chart-wrap" style="height:240px">
+        <canvas id="contentMix"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Avg Likes by Product Category</div>
+      <div class="panel-desc">Lifestyle/Travel heavily skewed by Mokobara's viral content</div>
+      <div class="chart-wrap" style="height:240px">
+        <canvas id="categoryChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEMPORAL ANALYSIS -->
+  <div class="section-label">02 — Temporal Patterns</div>
+  <div class="chart-grid-2" style="margin-bottom: 20px;">
+    <div class="panel">
+      <div class="panel-title">Monthly Post Volume Growth</div>
+      <div class="panel-desc">Dataset grows from 17 posts in Mar 2025 to 355 in Jan 2026 as more brands were included</div>
+      <div class="chart-wrap" style="height:240px">
+        <canvas id="monthlyVolume"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Avg Likes by Day of Week</div>
+      <div class="panel-desc">Tuesday & Wednesday posts drive the highest average engagement</div>
+      <div class="chart-wrap" style="height:240px">
+        <canvas id="dayChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENT CHARACTERISTICS -->
+  <div class="section-label">03 — Content Characteristics & Engagement</div>
+  <div class="chart-grid-2" style="margin-bottom: 20px;">
+    <div class="panel">
+      <div class="panel-title">Avg Likes by Caption Length Bucket</div>
+      <div class="panel-desc">Short (&lt;100 chars) and very long (800+) captions both outperform medium lengths — a U-shaped pattern</div>
+      <div class="chart-wrap" style="height:240px">
+        <canvas id="captionChart"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Avg Likes by Hashtag Count</div>
+      <div class="panel-desc">1–2 hashtags yields peak average likes; using none or many shows diminishing returns</div>
+      <div class="chart-wrap" style="height:240px">
+        <canvas id="hashtagChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- BRAND TABLE -->
+  <div class="section-label">04 — Brand Leaderboard</div>
+  <div class="panel chart-grid-full">
+    <div class="panel-title">Full Brand Performance Summary</div>
+    <div class="panel-desc">Ranked by average likes per post — engagement leader vs volume leader differ</div>
+    <table class="brand-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Brand</th>
+          <th>Category</th>
+          <th>Posts</th>
+          <th>Avg Likes</th>
+          <th>Median Likes</th>
+          <th>Avg Engagement</th>
+          <th>Relative Performance</th>
+        </tr>
+      </thead>
+      <tbody id="brandTableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- KEY INSIGHTS -->
+  <div class="section-label" style="margin-top: 32px;">05 — Key Insights & Implications</div>
+  <div class="insights-grid">
+    <div class="insight-card">
+      <span class="insight-icon">🎬</span>
+      <div class="insight-title">Video Reigns Supreme</div>
+      <div class="insight-body">Video posts average <strong>9,512 likes</strong> — 3× higher than Image (3,199) and 4.6× higher than Sidecar (2,083). For D2C SMEs with limited budgets, prioritising short-form video (Reels) has the clearest ROI signal.</div>
+    </div>
+    <div class="insight-card">
+      <span class="insight-icon">📅</span>
+      <div class="insight-title">Mid-Week Timing Advantage</div>
+      <div class="insight-body">Tuesday and Wednesday see <strong>11,618 and 9,763 avg likes</strong> respectively — significantly higher than Friday (4,640) or Monday (2,313). Scheduling key content mid-week could yield measurable engagement lift.</div>
+    </div>
+    <div class="insight-card">
+      <span class="insight-icon">#️⃣</span>
+      <div class="insight-title">Hashtag Sweet Spot: 1–2</div>
+      <div class="insight-body">Posts with 1–2 hashtags average <strong>13,445 likes</strong> — outperforming 0 hashtags (2,881), 3–5 (3,106), and 6–10 (3,682). Hyper-targeted minimal tagging outperforms hashtag flooding.</div>
+    </div>
+    <div class="insight-card">
+      <span class="insight-icon">📝</span>
+      <div class="insight-title">U-Shaped Caption Effect</div>
+      <div class="insight-body">Very short (&lt;100 chars: <strong>9,831 likes</strong>) and very long (800+ chars: <strong>11,333 likes</strong>) captions both beat mid-length. SMEs should pick a lane: punchy or storytelling — avoid vague middle-ground copy.</div>
+    </div>
+    <div class="insight-card">
+      <span class="insight-icon">📊</span>
+      <div class="insight-title">Extreme Engagement Skew</div>
+      <div class="insight-body">Mean likes (6,317) is <strong>15.8× the median</strong> (398), signalling extreme right-skew driven by viral outliers. Brand-level comparisons must account for this; median is a more robust central tendency measure for D2C SMEs.</div>
+    </div>
+    <div class="insight-card">
+      <span class="insight-icon">💬</span>
+      <div class="insight-title">Comments Disabled → Higher Likes</div>
+      <div class="insight-body">Posts with comments disabled average <strong>25,994 likes</strong> vs 5,265 when enabled. This likely reflects brand strategy: high-reach campaign posts (products launches, collabs) often disable comments while boosting paid visibility.</div>
+    </div>
+  </div>
+
+  <footer>
+    <span>SMDA Term Paper · Shaurya Baveja (PGPXC202500124) · Pratyush Bharati (PGPXC202500097)</span>
+    <span>Data: n=2,128 Instagram posts · 18 Indian D2C brands · Mar 2025 – Feb 2026</span>
+  </footer>
+</div>
+
+<script>
+  // ─── DATA ────────────────────────────────────────────────────────────────
+  const brands = [
+    { name: 'mokobara', label: 'Mokobara', cat: 'Lifestyle/Travel', posts: 66, avgLikes: 97655, medLikes: 731, avgEng: 97766 },
+    { name: 'thesouledstore', label: 'The Souled Store', cat: 'Fashion', posts: 194, avgLikes: 10754, medLikes: 1683, avgEng: 10854 },
+    { name: 'sironahygiene', label: 'Sirona Hygiene', cat: 'Health/Hygiene', posts: 131, avgLikes: 7973, medLikes: 171, avgEng: 8061 },
+    { name: 'mcaffeineofficial', label: 'mCaffeine', cat: 'Beauty', posts: 171, avgLikes: 5503, medLikes: 393, avgEng: 5699 },
+    { name: 'beminimalist__', label: 'Be Minimalist', cat: 'Beauty', posts: 83, avgLikes: 4936, medLikes: 932, avgEng: 5055 },
+    { name: 'insightcosmetic', label: 'Insight Cosmetic', cat: 'Beauty', posts: 185, avgLikes: 4370, medLikes: 742, avgEng: 4431 },
+    { name: 'foxtaleskin', label: 'Foxtale Skin', cat: 'Beauty', posts: 149, avgLikes: 3579, medLikes: 608, avgEng: 3783 },
+    { name: 'plumgoodness', label: 'Plum Goodness', cat: 'Beauty', posts: 166, avgLikes: 2578, medLikes: 381, avgEng: 2657 },
+    { name: 'thewholetruthfoods', label: 'The Whole Truth', cat: 'Food/Health', posts: 82, avgLikes: 2163, medLikes: 800, avgEng: 2246 },
+    { name: 'bombayshirts', label: 'Bombay Shirt Co.', cat: 'Fashion', posts: 156, avgLikes: 1592, medLikes: 743, avgEng: 1596 },
+    { name: 'indya', label: 'Indya', cat: 'Fashion', posts: 124, avgLikes: 741, medLikes: 58, avgEng: 746 },
+    { name: 'bombayshavingcompany', label: 'Bombay Shaving Co.', cat: 'Personal Care', posts: 154, avgLikes: 595, medLikes: 266, avgEng: 617 },
+    { name: 'bira91beer', label: 'Bira 91', cat: 'Beverages', posts: 158, avgLikes: 485, medLikes: 293, avgEng: 492 },
+    { name: 'sleepyowlcoffee', label: 'Sleepy Owl Coffee', cat: 'Beverages', posts: 31, avgLikes: 328, medLikes: 197, avgEng: 339 },
+    { name: 'wakefitco', label: 'Wakefit', cat: 'Lifestyle/Home', posts: 11, avgLikes: 216, medLikes: 40, avgEng: 239 },
+    { name: 'jimmysbeverages', label: "Jimmy's Beverages", cat: 'Beverages', posts: 153, avgLikes: 206, medLikes: 51, avgEng: 209 },
+    { name: 'suta_bombay', label: 'Suta Bombay', cat: 'Fashion', posts: 7, avgLikes: 164, medLikes: 96, avgEng: 180 },
+    { name: 'myblissclub', label: 'My Bliss Club', cat: 'Beauty', posts: 107, avgLikes: 136, medLikes: 77, avgEng: 155 },
+  ];
+
+  const CAT_COLORS = {
+    'Lifestyle/Travel': '#ff6b35',
+    'Fashion': '#7c5cfc',
+    'Beauty': '#ff84ab',
+    'Health/Hygiene': '#00d4aa',
+    'Food/Health': '#ffd166',
+    'Personal Care': '#66d9e8',
+    'Beverages': '#a78bfa',
+    'Lifestyle/Home': '#f97316',
+  };
+
+  Chart.defaults.color = '#6b6b8a';
+  Chart.defaults.borderColor = '#2a2a3d';
+  Chart.defaults.font.family = "'DM Mono', monospace";
+  Chart.defaults.font.size = 11;
+
+  const gridLine = { color: 'rgba(42,42,61,0.6)', drawBorder: false };
+  const noGrid = { display: false };
+
+  function mk(id, type, data, opts) {
+    return new Chart(document.getElementById(id), { type, data, options: { responsive: true, maintainAspectRatio: false, ...opts } });
+  }
+
+  // ─── 1. Brand Likes (horizontal bar, top 18) ───────────────────────────
+  mk('brandLikes', 'bar', {
+    labels: brands.map(b => b.label),
+    datasets: [{
+      label: 'Avg Likes',
+      data: brands.map(b => b.avgLikes),
+      backgroundColor: brands.map(b => CAT_COLORS[b.cat] + 'cc'),
+      borderColor: brands.map(b => CAT_COLORS[b.cat]),
+      borderWidth: 1,
+      borderRadius: 2,
+    }]
+  }, {
+    indexAxis: 'y',
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + c.raw.toLocaleString() + ' avg likes' } } },
+    scales: {
+      x: { grid: gridLine, ticks: { callback: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v } },
+      y: { grid: noGrid, ticks: { font: { size: 10 } } }
+    }
+  });
+
+  // ─── 2. Brand Volume ───────────────────────────────────────────────────
+  mk('brandVolume', 'bar', {
+    labels: [...brands].sort((a,b) => b.posts - a.posts).map(b => b.label),
+    datasets: [{
+      label: 'Posts',
+      data: [...brands].sort((a,b) => b.posts - a.posts).map(b => b.posts),
+      backgroundColor: 'rgba(124,92,252,0.3)',
+      borderColor: '#7c5cfc',
+      borderWidth: 1,
+      borderRadius: 2,
+    }]
+  }, {
+    indexAxis: 'y',
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: gridLine },
+      y: { grid: noGrid, ticks: { font: { size: 10 } } }
+    }
+  });
+
+  // ─── 3. Content Type Likes ─────────────────────────────────────────────
+  mk('contentType', 'bar', {
+    labels: ['Image', 'Sidecar', 'Video'],
+    datasets: [{
+      data: [3199, 2083, 9512],
+      backgroundColor: ['rgba(255,107,53,0.7)', 'rgba(124,92,252,0.7)', 'rgba(0,212,170,0.7)'],
+      borderColor: ['#ff6b35','#7c5cfc','#00d4aa'],
+      borderWidth: 1,
+      borderRadius: 3,
+    }]
+  }, {
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: noGrid },
+      y: { grid: gridLine, ticks: { callback: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v } }
+    }
+  });
+
+  // ─── 4. Content Mix ────────────────────────────────────────────────────
+  mk('contentMix', 'doughnut', {
+    labels: ['Video (54.4%)', 'Sidecar (28.2%)', 'Image (17.4%)'],
+    datasets: [{
+      data: [1157, 600, 371],
+      backgroundColor: ['rgba(0,212,170,0.8)', 'rgba(124,92,252,0.8)', 'rgba(255,107,53,0.8)'],
+      borderColor: '#12121a',
+      borderWidth: 3,
+    }]
+  }, {
+    plugins: {
+      legend: { position: 'bottom', labels: { padding: 16, font: { size: 11 } } }
+    },
+    cutout: '68%',
+  });
+
+  // ─── 5. Category ──────────────────────────────────────────────────────
+  const catData = [
+    { cat: 'Lifestyle/Travel', val: 97655 },
+    { cat: 'Health/Hygiene', val: 7973 },
+    { cat: 'Fashion', val: 5047 },
+    { cat: 'Beauty', val: 3641 },
+    { cat: 'Food/Health', val: 2163 },
+    { cat: 'Personal Care', val: 595 },
+    { cat: 'Beverages', val: 346 },
+    { cat: 'Lifestyle/Home', val: 216 },
+  ];
+  mk('categoryChart', 'bar', {
+    labels: catData.map(d => d.cat),
+    datasets: [{
+      data: catData.map(d => d.val),
+      backgroundColor: catData.map(d => CAT_COLORS[d.cat] + 'bb'),
+      borderColor: catData.map(d => CAT_COLORS[d.cat]),
+      borderWidth: 1,
+      borderRadius: 2,
+    }]
+  }, {
+    indexAxis: 'y',
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: gridLine, ticks: { callback: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v } },
+      y: { grid: noGrid, ticks: { font: { size: 10 } } }
+    }
+  });
+
+  // ─── 6. Monthly Volume ────────────────────────────────────────────────
+  const months = ['Mar 25','Apr 25','May 25','Jun 25','Jul 25','Aug 25','Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26'];
+  const monthVol = [17,19,34,28,67,125,245,218,250,282,355,224];
+  const monthLikes = [2150,574,2682,10209,15235,1730,3745,2967,3894,2516,3656,1653];
+  mk('monthlyVolume', 'bar', {
+    labels: months,
+    datasets: [
+      {
+        label: 'Post Volume',
+        data: monthVol,
+        backgroundColor: 'rgba(124,92,252,0.35)',
+        borderColor: '#7c5cfc',
+        borderWidth: 1,
+        borderRadius: 2,
+        yAxisID: 'y',
+      },
+      {
+        label: 'Avg Likes',
+        data: monthLikes,
+        type: 'line',
+        borderColor: '#ffd166',
+        backgroundColor: 'rgba(255,209,102,0.1)',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#ffd166',
+        tension: 0.3,
+        yAxisID: 'y1',
+        fill: true,
+      }
+    ]
+  }, {
+    plugins: { legend: { position: 'bottom', labels: { padding: 16, font: { size: 11 } } } },
+    scales: {
+      x: { grid: noGrid },
+      y: { grid: gridLine, position: 'left', title: { display: true, text: 'Posts', font: { size: 10 } } },
+      y1: { grid: noGrid, position: 'right', title: { display: true, text: 'Avg Likes', font: { size: 10 } }, ticks: { callback: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v } }
+    }
+  });
+
+  // ─── 7. Day of Week ──────────────────────────────────────────────────
+  const dayOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const dayLikes = [2313, 11618, 9763, 5008, 4640, 2549, 6896];
+  mk('dayChart', 'bar', {
+    labels: dayOrder,
+    datasets: [{
+      label: 'Avg Likes',
+      data: dayLikes,
+      backgroundColor: dayLikes.map(v => v > 8000 ? 'rgba(0,212,170,0.75)' : v > 4000 ? 'rgba(255,209,102,0.6)' : 'rgba(124,92,252,0.4)'),
+      borderColor: dayLikes.map(v => v > 8000 ? '#00d4aa' : v > 4000 ? '#ffd166' : '#7c5cfc'),
+      borderWidth: 1,
+      borderRadius: 3,
+    }]
+  }, {
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: noGrid },
+      y: { grid: gridLine, ticks: { callback: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v } }
+    }
+  });
+
+  // ─── 8. Caption Length ───────────────────────────────────────────────
+  mk('captionChart', 'bar', {
+    labels: ['0–100', '100–200', '200–400', '400–800', '800+'],
+    datasets: [{
+      data: [9831, 3476, 3038, 2867, 11333],
+      backgroundColor: ['rgba(0,212,170,0.7)', 'rgba(124,92,252,0.45)', 'rgba(124,92,252,0.35)', 'rgba(124,92,252,0.25)', 'rgba(0,212,170,0.7)'],
+      borderColor: ['#00d4aa', '#7c5cfc', '#7c5cfc', '#7c5cfc', '#00d4aa'],
+      borderWidth: 1,
+      borderRadius: 3,
+    }]
+  }, {
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: noGrid, title: { display: true, text: 'Characters', font: { size: 10 } } },
+      y: { grid: gridLine, ticks: { callback: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v } }
+    }
+  });
+
+  // ─── 9. Hashtag ──────────────────────────────────────────────────────
+  mk('hashtagChart', 'bar', {
+    labels: ['0', '1–2', '3–5', '6–10'],
+    datasets: [{
+      data: [2881, 13445, 3106, 3682],
+      backgroundColor: ['rgba(124,92,252,0.4)', 'rgba(255,209,102,0.8)', 'rgba(124,92,252,0.4)', 'rgba(124,92,252,0.4)'],
+      borderColor: ['#7c5cfc', '#ffd166', '#7c5cfc', '#7c5cfc'],
+      borderWidth: 1,
+      borderRadius: 3,
+    }]
+  }, {
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: noGrid, title: { display: true, text: 'Hashtag Count', font: { size: 10 } } },
+      y: { grid: gridLine, ticks: { callback: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v } }
+    }
+  });
+
+  // ─── BRAND TABLE ─────────────────────────────────────────────────────
+  const maxLikes = brands[0].avgLikes;
+  const tbody = document.getElementById('brandTableBody');
+  brands.forEach((b, i) => {
+    const pct = (b.avgLikes / maxLikes * 100).toFixed(1);
+    const color = CAT_COLORS[b.cat];
+    const isTop = i < 3;
+    tbody.innerHTML += `
+      <tr>
+        <td><span class="rank-badge ${isTop ? 'top' : ''}">${i+1}</span></td>
+        <td style="font-weight:500">${b.label}</td>
+        <td style="color:${color};font-size:11px">${b.cat}</td>
+        <td>${b.posts}</td>
+        <td style="color:${color};font-weight:500">${b.avgLikes.toLocaleString()}</td>
+        <td>${b.medLikes.toLocaleString()}</td>
+        <td>${b.avgEng.toLocaleString()}</td>
+        <td style="min-width:120px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px">${pct}%</div>
+          <div class="bar-mini" style="width:${pct}%;background:${color};max-width:100%"></div>
+        </td>
+      </tr>`;
+  });
+</script>
+</body>
+</html>
