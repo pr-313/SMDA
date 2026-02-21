@@ -12,6 +12,7 @@ Usage:
   python sentiment_toolkit.py --input data.csv --mode C
   python sentiment_toolkit.py --input data.csv --mode D --freq W
   python sentiment_toolkit.py --input data.csv --mode E --min-posts 5
+  python sentiment_toolkit.py --input data.csv --mode F
   python sentiment_toolkit.py --input data.csv --mode all
   python sentiment_toolkit.py --input data.csv --mode E --exclude mokobara
   python sentiment_toolkit.py --input data.csv --mode all --exclude mokobara thesouledstore
@@ -623,6 +624,8 @@ def mode_d(df: pd.DataFrame, args):
     footer(f"Frequency: {freq_label}. Change with --freq D|W|ME|QE")
 
 
+
+
 # ══════════════════════════════════════════════════════════════
 # MODE E — BRAND-LEVEL AGGREGATION
 # ══════════════════════════════════════════════════════════════
@@ -721,8 +724,312 @@ def mode_e(df: pd.DataFrame, args):
 
 
 # ══════════════════════════════════════════════════════════════
-# CLI ENTRY POINT
+# MODE F — FULL-FEATURE REGRESSION (compound engagement target)
 # ══════════════════════════════════════════════════════════════
+
+def mode_f(df: pd.DataFrame, args):
+    from sklearn.linear_model import LinearRegression, Ridge
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.model_selection import cross_val_score
+    from scipy import stats
+
+    banner("MODE F — Full-Feature Regression",
+           "Predicting compound engagement (likes + video views) from all relevant signals")
+
+    # ── 1. Build compound target ─────────────────────────────────
+    section("Target Variable Construction")
+    df = df.copy()
+    df["_likes"]  = df["likesScaled"].fillna(0)
+    # df["_likes"]  = df["likesCount"].fillna(0)
+    df["_views"]  = df["videoViewCount"].fillna(0)
+
+    # Normalise each to [0,1] before summing so neither dominates
+    likes_max = df["_likes"].max() or 1
+    views_max = df["_views"].max() or 1
+    # df["_engagement_score"] = (df["_likes"] / likes_max) + (df["_views"] / views_max)
+    # df["_engagement_log"]   = np.log1p(df["_likes"] + df["_views"])
+    df["_engagement_score"] = (df["_likes"])
+    df["_engagement_log"]   = np.log1p(df["_likes"])
+
+    row_print("Likes range",        f"{df['_likes'].min():,.0f} – {df['_likes'].max():,.0f}")
+    row_print("Video views range",  f"{df['_views'].min():,.0f} – {df['_views'].max():,.0f}  (0 = non-video posts)")
+    row_print("Compound score",     "norm(likes) + norm(videoViews)  → [0, 2]")
+    # row_print("Model target",       "log(1 + likes + videoViews)  [log-normalised for OLS]")
+    row_print("Model target",       "log(1 + likes)  [log-normalised for OLS]")
+    row_print("Score mean",         f"{df['_engagement_score'].mean():.4f}")
+    row_print("Score median",       f"{df['_engagement_score'].median():.4f}")
+    row_print("Score std",          f"{df['_engagement_score'].std():.4f}")
+
+    # # Sparkline of compound score distribution
+    # hist_vals = df["_engagement_score"].clip(0, 2)
+    # bins_es   = np.linspace(0, 2, 11)
+    # counts_es, _ = np.histogram(hist_vals, bins=bins_es)
+    # max_ce = counts_es.max() or 1
+    # print(C["dim"] + "\n  Compound Score Distribution:")
+    # for i, cnt in enumerate(counts_es):
+    #     lbl = f"{bins_es[i]:.1f}–{bins_es[i+1]:.1f}"
+    #     filled = int(cnt / max_ce * 35)
+    #     col = Fore.GREEN if bins_es[i] > 0.5 else Fore.CYAN
+    #     bar = col + "█" * filled + Style.DIM + "░" * (35 - filled) + C["reset"]
+    #     print(f"    {lbl:>9}  {bar}  {cnt:>5}")
+    #
+    # ── 2. Feature Engineering ───────────────────────────────────
+    section("Feature Engineering")
+
+    feats = {}
+
+    # — Sentiment features —
+    feats["caption_compound"]    = df["caption_compound"]
+    feats["caption_pos_score"]   = df["caption_pos_score"]
+    feats["caption_neg_score"]   = df["caption_neg_score"]
+    feats["comment_compound"]    = df["comment_compound"]
+    feats["sentiment_gap"]       = df["caption_compound"] - df["comment_compound"]
+
+    # — Text / content features —
+    feats["caption_word_count"]  = df["caption_word_count"]
+    feats["caption_length"]      = df["caption_length"].fillna(df["caption_length"].median())
+    feats["hashtag_count"]       = df["hashtag_count"].fillna(0)
+    feats["has_mention"]         = df["mentions/0"].notna().astype(float)
+    feats["has_location"]        = df["locationName"].notna().astype(float)
+
+    # — Post type dummies (base = Image) —
+    feats["is_video"]            = (df["type"] == "Video").astype(float)
+    feats["is_sidecar"]          = (df["type"] == "Sidecar").astype(float)
+
+    # — Video-specific features (0 for non-video posts) —
+    feats["video_duration"]      = df["videoDuration"].fillna(0)
+    feats["uses_original_audio"] = (
+        df["musicInfo/uses_original_audio"]
+        .map({True: 1, False: 0, "True": 1, "False": 0})
+        .fillna(0)
+    )
+
+    # — Aspect ratio —
+    feats["aspect_ratio"] = (
+        df["dimensionsHeight"] / df["dimensionsWidth"].replace(0, np.nan)
+    ).fillna(1.0)
+    # Categorise: portrait (>1), square (~1), landscape (<1)
+    feats["is_portrait"]  = (feats["aspect_ratio"] > 1.1).astype(float)
+    feats["is_landscape"] = (feats["aspect_ratio"] < 0.9).astype(float)
+
+    # — Temporal features —
+    ts = pd.to_datetime(df["timestamp"], errors="coerce", utc=True)
+    feats["hour_of_day"]    = ts.dt.hour.fillna(12)
+    feats["day_of_week"]    = ts.dt.dayofweek.fillna(0)      # 0=Mon
+    feats["is_weekend"]     = (ts.dt.dayofweek >= 5).astype(float).fillna(0)
+    feats["month"]          = ts.dt.month.fillna(6)
+    # Peak hours (7–9 AM, 11 AM–1 PM, 5–7 PM IST)
+    hr = feats["hour_of_day"]
+    feats["is_peak_hour"]   = (
+        ((hr >= 7) & (hr <= 9)) | ((hr >= 11) & (hr <= 13)) | ((hr >= 17) & (hr <= 19))
+    ).astype(float)
+
+    # — Brand-level fixed effect proxy: brand avg engagement (leave-one-out style) —
+    df["_target"] = df["_engagement_log"]
+    brand_avg = df.groupby("ownerUsername")["_target"].transform("mean")
+    # feats["brand_avg_engagement"] = brand_avg.fillna(brand_avg.mean())
+
+    # — Comments disabled flag —
+    feats["comments_disabled"] = df["isCommentsDisabled"].astype(float)
+
+    feat_df = pd.DataFrame(feats)
+
+    # Print feature list
+    groups = {
+        "Sentiment":     ["caption_compound","caption_pos_score","caption_neg_score",
+                          "comment_compound","sentiment_gap"],
+        "Text/Content":  ["caption_word_count","caption_length","hashtag_count",
+                          "has_mention","has_location","comments_disabled"],
+        "Post Format":   ["is_video","is_sidecar","video_duration","uses_original_audio",
+                          "aspect_ratio","is_portrait","is_landscape"],
+        "Temporal":      ["hour_of_day","day_of_week","is_weekend","month","is_peak_hour"],
+        # "Brand Proxy":   ["brand_avg_engagement"],
+    }
+    for grp, cols in groups.items():
+        coverage = [f"{c} ({feat_df[c].notna().mean()*100:.0f}%)" for c in cols if c in feat_df]
+        print(C["sub"] + f"\n  {grp}:")
+        for c in coverage:
+            print(C["dim"] + f"    • {c}")
+
+    # ── 3. Fit model ─────────────────────────────────────────────
+    section("Model Fitting")
+
+    y = df["_engagement_score"]
+    mask = feat_df.notna().all(axis=1) & y.notna()
+    X_raw = feat_df[mask].values
+    y_fit = y[mask].values
+    n, p  = X_raw.shape
+
+    scaler   = StandardScaler()
+    X_scaled = scaler.fit_transform(X_raw)
+
+    # OLS
+    ols = LinearRegression().fit(X_scaled, y_fit)
+    y_pred_ols = ols.predict(X_scaled)
+    res_ols    = y_fit - y_pred_ols
+    ss_res     = np.sum(res_ols**2)
+    ss_tot     = np.sum((y_fit - y_fit.mean())**2)
+    r2_ols     = 1 - ss_res / ss_tot
+    adj_r2     = 1 - (1 - r2_ols) * (n - 1) / (n - p - 1)
+    mse        = ss_res / (n - p - 1)
+    rmse       = np.sqrt(np.mean(res_ols**2))
+
+    # Ridge (for robustness comparison)
+    ridge    = Ridge(alpha=1.0).fit(X_scaled, y_fit)
+    y_pred_r = ridge.predict(X_scaled)
+    ss_res_r = np.sum((y_fit - y_pred_r)**2)
+    r2_ridge = 1 - ss_res_r / ss_tot
+
+    # Cross-validated R²
+    cv_scores = cross_val_score(LinearRegression(), X_scaled, y_fit, cv=5, scoring="r2")
+
+    row_print("Observations",          f"{n:,}  (of {len(df):,} total rows)")
+    row_print("Features",              f"{p}")
+    row_print("OLS R²",               f"{r2_ols:.4f}")
+    row_print("OLS Adj. R²",          f"{adj_r2:.4f}")
+    row_print("Ridge R²",             f"{r2_ridge:.4f}")
+    row_print("5-Fold CV R² (mean)",  f"{cv_scores.mean():.4f}")
+    row_print("5-Fold CV R² (std)",   f"{cv_scores.std():.4f}")
+    row_print("RMSE (log scale)",     f"{rmse:.4f}")
+
+    # R² quality indicator
+    print()
+    r2_bar_filled = int(r2_ols * 40)
+    col_r2 = C["pos"] if r2_ols > 0.4 else C["warn"] if r2_ols > 0.15 else C["neg"]
+    bar_r2 = col_r2 + "█" * r2_bar_filled + Style.DIM + "░" * (40 - r2_bar_filled) + C["reset"]
+    print(f"  R² fit   {bar_r2}  {r2_ols:.4f}")
+
+    cv_bar_filled = int(max(0, cv_scores.mean()) * 40)
+    col_cv = C["pos"] if cv_scores.mean() > 0.4 else C["warn"] if cv_scores.mean() > 0.15 else C["neg"]
+    bar_cv = col_cv + "█" * cv_bar_filled + Style.DIM + "░" * (40 - cv_bar_filled) + C["reset"]
+    print(f"  CV R²    {bar_cv}  {cv_scores.mean():.4f}")
+
+    # ── 4. Coefficients with t-stats ─────────────────────────────
+    section("Coefficients — Ranked by Absolute Impact")
+
+    feat_names = list(feats.keys())
+    try:
+        var_b  = mse * np.linalg.inv(X_scaled.T @ X_scaled).diagonal()
+        se     = np.sqrt(np.abs(var_b))
+        t_stat = ols.coef_ / (se + 1e-12)
+        p_vals = 2 * (1 - stats.t.cdf(np.abs(t_stat), df=n - p - 1))
+    except np.linalg.LinAlgError:
+        t_stat = np.zeros(p)
+        p_vals = np.ones(p)
+
+    coef_data = sorted(
+        zip(feat_names, ols.coef_, t_stat, p_vals),
+        key=lambda x: abs(x[1]), reverse=True
+    )
+
+    print(f"\n  {'Feature':<28} {'Coef':>8}  {'t':>7}  {'p':>8}  {'Sig':>4}  Impact")
+    print(C["sep"] + "  " + "─" * 78)
+
+    max_coef = max(abs(c) for _, c, _, _ in coef_data) or 1
+    for fname, coef, t, p in coef_data:
+        sig  = "***" if p < 0.001 else "**" if p < 0.01 else "*" if p < 0.05 else "   "
+        col  = Fore.GREEN if coef > 0 else Fore.RED
+        sign = "+" if coef > 0 else "-"
+        filled = int(abs(coef) / max_coef * 28)
+        bar = col + "█" * filled + Style.DIM + "░" * (28 - filled) + C["reset"]
+        sig_col = C["pos"] if sig.strip() else C["dim"]
+        print(f"  {fname:<28} {coef:>+8.4f}  {t:>+7.3f}  {p:>8.4f}  "
+              f"{sig_col}{sig}{C['reset']}  {sign}{bar}")
+
+    # ── 5. Feature group importance ───────────────────────────────
+    section("Variance Explained by Feature Group")
+    coef_map = dict(zip(feat_names, ols.coef_))
+    group_importance = {}
+    for grp, cols in groups.items():
+        cols_present = [c for c in cols if c in coef_map]
+        group_importance[grp] = sum(abs(coef_map[c]) for c in cols_present)
+
+    total_imp = sum(group_importance.values()) or 1
+    print(f"\n  {'Group':<18} {'Abs Coef Sum':>13}  {'Share':>6}  Chart")
+    print(C["sep"] + "  " + "─" * 70)
+    for grp, imp in sorted(group_importance.items(), key=lambda x: x[1], reverse=True):
+        pct  = imp / total_imp * 100
+        col  = Fore.CYAN if pct > 20 else Fore.YELLOW if pct > 10 else Style.DIM + Fore.WHITE
+        filled = int(pct / 2)
+        bar = col + "█" * filled + Style.DIM + "░" * (50 - filled) + C["reset"]
+        print(f"  {grp:<18} {imp:>13.4f}  {pct:>5.1f}%  {bar}")
+
+    # ── 6. Residual diagnostics ───────────────────────────────────
+    section("Residual Diagnostics")
+
+    # Normality test
+    _, p_norm = stats.shapiro(res_ols[:500])   # Shapiro on first 500
+    row_print("Shapiro-Wilk p (normality)", f"{p_norm:.6f}  " +
+              (C["pos"] + "residuals approx. normal" if p_norm > 0.05
+               else C["warn"] + "residuals non-normal (common w/ social data)"))
+
+    # Skew & kurtosis
+    from scipy.stats import skew, kurtosis
+    row_print("Residual skewness",  f"{skew(res_ols):.4f}")
+    row_print("Residual kurtosis",  f"{kurtosis(res_ols):.4f}")
+
+    # Residual histogram
+    res_clipped = np.clip(res_ols, -4, 4)
+    bins_r      = np.linspace(-4, 4, 13)
+    counts_r, _ = np.histogram(res_clipped, bins=bins_r)
+    max_cr      = counts_r.max() or 1
+    print(C["dim"] + "\n  Residual Distribution (should be roughly bell-shaped):")
+    for i, cnt in enumerate(counts_r):
+        lbl    = f"{bins_r[i]:+.1f}"
+        filled = int(cnt / max_cr * 35)
+        col    = Fore.GREEN if abs((bins_r[i] + bins_r[i+1]) / 2) < 1 else Fore.YELLOW
+        bar    = col + "█" * filled + Style.DIM + "░" * (35 - filled) + C["reset"]
+        print(f"    {lbl:>6}  {bar}  {cnt:>5}")
+
+    # ── 7. Top / bottom predicted posts ──────────────────────────
+    section("Model Predictions — Top & Bottom 5")
+
+    pred_df = df[mask].copy()
+    pred_df["_predicted_log"]  = y_pred_ols
+    pred_df["_residual"]       = res_ols
+    pred_df["_actual_eng"]     = (df["_likes"][mask].values)
+    # pred_df["_actual_eng"]     = (df["_likes"][mask].values + df["_views"][mask].values)
+
+    cols_show = ["ownerUsername", "type", "caption_compound",
+                 "_actual_eng", "_predicted_log", "_residual"]
+
+    print(C["sub"] + "\n  ▲ Top 5 (best predicted high engagement):")
+    top5 = pred_df.nlargest(5, "_predicted_log")[cols_show]
+    top5["_actual_eng"]     = top5["_actual_eng"].apply(lambda x: f"{x:,.0f}")
+    top5["_predicted_log"]  = top5["_predicted_log"].apply(lambda x: f"{x:.3f}")
+    top5["_residual"]       = top5["_residual"].apply(lambda x: f"{x:+.3f}")
+    top5["caption_compound"] = top5["caption_compound"].apply(lambda x: f"{x:+.3f}")
+    print_table(top5, headers=["Brand","Type","Sentiment","Actual Eng.","Pred (log)","Residual"])
+
+    print(C["sub"] + "\n  ▼ Bottom 5 (predicted lowest engagement):")
+    bot5 = pred_df.nsmallest(5, "_predicted_log")[cols_show]
+    bot5["_actual_eng"]     = bot5["_actual_eng"].apply(lambda x: f"{x:,.0f}")
+    bot5["_predicted_log"]  = bot5["_predicted_log"].apply(lambda x: f"{x:.3f}")
+    bot5["_residual"]       = bot5["_residual"].apply(lambda x: f"{x:+.3f}")
+    bot5["caption_compound"] = bot5["caption_compound"].apply(lambda x: f"{x:+.3f}")
+    print_table(bot5, headers=["Brand","Type","Sentiment","Actual Eng.","Pred (log)","Residual"])
+
+    # ── 8. Key takeaways ─────────────────────────────────────────
+    section("Key Takeaways")
+
+    top3 = coef_data[:3]
+    print(C["dim"] + "  Strongest predictors of compound engagement:\n")
+    for i, (fname, coef, t, p) in enumerate(top3, 1):
+        direction = "increases" if coef > 0 else "decreases"
+        sig_str   = "significantly" if p < 0.05 else "marginally"
+        col       = C["pos"] if coef > 0 else C["neg"]
+        print(col + f"  {i}. {fname:<26}" + C["reset"] +
+              f" {direction} engagement {sig_str}  (β={coef:+.4f}, p={p:.4f})")
+
+    sentiment_coefs = {k: v for k, v, _, _ in coef_data if "caption" in k or "comment" in k or "sentiment" in k}
+    net_sentiment = sum(sentiment_coefs.values())
+    col = C["pos"] if net_sentiment > 0 else C["neg"]
+    print()
+    row_print("Net sentiment signal (all sentiment coefs)", col + f"{net_sentiment:+.4f}  " +
+              ("→ positive tone helps" if net_sentiment > 0 else "→ neutral/edgy tone performs better"))
+
+    footer("Target: log(1 + likes + videoViews). OLS + Ridge + 5-fold CV reported for robustness.")
+
 
 MODES = {
     "A": ("Regression Analysis",      mode_a),
@@ -730,6 +1037,7 @@ MODES = {
     "C": ("Alignment Analysis",       mode_c),
     "D": ("Time-Series Analysis",     mode_d),
     "E": ("Brand-Level Aggregation",  mode_e),
+    "F": ("Full-Feature Regression",  mode_f),
 }
 
 def print_help_menu():
@@ -744,7 +1052,7 @@ def print_help_menu():
     print(C["sub"] + "\n  COMMON OPTIONS:\n")
     opts = [
         ("--input FILE",       "Input CSV path (default: instagram_combined_final.csv)"),
-        ("--mode MODE",        "A | B | C | D | E | all"),
+        ("--mode MODE",        "A | B | C | D | E | F | all"),
         ("--field FIELD",      "caption | comment  (default: caption)"),
         ("--target COL",       "Mode A: engagement column (default: likesCount)"),
         ("--freq FREQ",        "Mode D: D | W | ME | QE  (default: ME)"),
